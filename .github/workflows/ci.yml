@@ -27,7 +27,7 @@ jobs:
         run: uv python install 3.11
 
       - name: 安装依赖
-        run: uv sync --all-extras --dev
+        run: uv sync --frozen --all-extras --dev
 
       - name: ruff 静态检查
         run: uv run ruff check src tests eval scripts
@@ -38,18 +38,24 @@ jobs:
       - name: mypy strict 类型检查
         run: uv run mypy src
 
-      - name: pytest（全部离线，录制回放）
-        run: uv run pytest --cov=basepilot --cov-report=xml --cov-report=term
+      - name: pytest（全离线）
+        run: uv run pytest
 
-      - name: 评测（8 项指标）
+      - name: 评测（8 项指标，未实现项标pending）
         run: uv run python eval/runner.py
 
-      - name: 上传覆盖率
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.xml
-          if-no-files-found: ignore
+      # 硬门禁 1：README/docs 里引用的文件必须真实存在
+      # 防止出现「承诺了文档但文件不存在」—— 面试官点开 README 3 秒就能发现
+      - name: 文档链接校验
+        run: uv run python scripts/check_doc_links.py
+
+      # 硬门禁 2：排障 SOP 与 errors.py 必须零漂移
+      # 防止加了错误码忘记更文档，导致客户按手册操作解决不了问题
+      - name: 文档与代码漂移校验
+        run: uv run python scripts/gen_troubleshooting.py --check
+
+      - name: CLI 入口自检（装包后不能 ImportError）
+        run: uv run basepilot-mcp doctor
 
   docker:
     runs-on: ubuntu-latest
