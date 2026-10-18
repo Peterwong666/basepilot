@@ -121,6 +121,16 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 | `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（促活指标/追闭环/挖场景，`make adoption` 一键出周报） |
 | `docs/limitations.md` | 已知限制 + 真实失败模式（单选传数组/日期传秒级/人员传字符串/读结构≠写结构） |
 
+**FDE 交付方法论五连**（全部「报告即代码」：数字从 `diagnosis.py`/cassette/eval 实算，改源数据重跑自动更新，测试锁结构）：
+
+| 文档 | 回答 | 生成脚本 |
+|---|---|---|
+| `docs/delivery/discovery_report.md` | **先做哪个**（五维诊断 + 四象限 + 2 劝退） | `scripts/gen_discovery_report.py` |
+| `docs/delivery/solution_blueprint.md` | **怎么做**（top3 环节展开成可签字方案） | `scripts/gen_solution_blueprint.py` |
+| `docs/delivery/case_backtest.md` | **凭什么信你**（真实证据回测当初预测） | `scripts/gen_case_backtest.py` |
+| `docs/delivery/expansion_matrix.md` | **能复制到哪**（15 场景归纳 4 种能力模式） | `scripts/gen_expansion_matrix.py` |
+| `docs/delivery/rollout_calendar.md` | **按什么节奏铺**（4 波次先稳后难推广日历） | `scripts/gen_rollout_calendar.py` |
+
 ---
 
 ## 快速开始
@@ -187,6 +197,11 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 | `docs/delivery/troubleshooting.md` | 错误码 → 现场动作排障 SOP（**由 `errors.py` 自动生成**） |
 | `docs/delivery/client_training.md` | 客户培训手册（给业务方的一页纸） |
 | `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（`make adoption` 一键出促活周报） |
+| `docs/delivery/discovery_report.md` | FDE 方法论①先做哪个（诊断报告，报告即代码） |
+| `docs/delivery/solution_blueprint.md` | FDE 方法论②怎么做（方案蓝图） |
+| `docs/delivery/case_backtest.md` | FDE 方法论③凭什么信你（案例回测） |
+| `docs/delivery/expansion_matrix.md` | FDE 方法论④能复制到哪（可复制矩阵） |
+| `docs/delivery/rollout_calendar.md` | FDE 方法论⑤按什么节奏铺（推广日历） |
 | `docs/limitations.md` | 已知限制与 badcase（含真实失败模式） |
 | `docs/adr/` | 架构决策记录（含 006「读结构≠写结构」——cassette 实证） |
 | `tests/cassettes/` | 真实租户交互录制（脱敏），`test_cassette_replay.py` CI 重放 |
