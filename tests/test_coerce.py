@@ -17,15 +17,16 @@ from basepilot.coerce import CoerceError, coerce_record, coerce_value
 
 
 def test_text_basic() -> None:
-    assert coerce_value("标题", 1, "断货预警") == [{"type": "text", "text": "断货预警"}]
+    # 写入时文本字段是纯字符串（富文本数组是读取结构，写入会报 1254060）
+    assert coerce_value("标题", 1, "断货预警") == "断货预警"
 
 
 def test_text_none_returns_empty() -> None:
-    assert coerce_value("备注", 1, None) == []
+    assert coerce_value("备注", 1, None) == ""
 
 
 def test_text_number_coerced_to_string() -> None:
-    assert coerce_value("单号", 1, 12345) == [{"type": "text", "text": "12345"}]
+    assert coerce_value("单号", 1, 12345) == "12345"
 
 
 # ---------------------------------------------------------------------------

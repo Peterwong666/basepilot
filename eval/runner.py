@@ -81,7 +81,7 @@ def _measure_field_encoding() -> tuple[int, int, float, float]:
 
     # 正向用例：(字段, type, 输入, 期望输出)
     positive: list[tuple[str, int, object, object]] = [
-        ("标题", 1, "断货预警", [{"type": "text", "text": "断货预警"}]),
+        ("标题", 1, "断货预警", "断货预警"),
         ("库存", 2, 42, 42.0),
         ("状态", 3, "正常", "正常"),
         ("状态", 3, ["正常"], "正常"),

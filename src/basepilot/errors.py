@@ -124,6 +124,19 @@ RULES: dict[int, ErrorRule] = {
         keywords=("uuidv4",),
     ),
     # ---------------- 权限类：必须给现场指引 ----------------
+    99991672: ErrorRule(
+        code=99991672,
+        action=Action.FAIL_FAST,
+        title="Access denied（应用身份权限未开通）",
+        guidance=(
+            "应用还没开通所需的 scope。错误 msg 里会直接给出申请链接"
+            "（形如 https://open.feishu.cn/app/<app_id>/auth?q=...）。"
+            "⚠️ 实测踩坑：「多维表格自动化」和「读写多维表格记录」是**两个不同权限域**——"
+            "前者只管工作流触发，读写记录/建表需要的是 `bitable:app`（+建表 `base:app:create`）。"
+            "在开发者后台「权限管理」开通后，**需发布新版本应用才生效**。"
+        ),
+        keywords=("权限", "scope", "bitable:app", "发布"),
+    ),
     1254302: ErrorRule(
         code=1254302,
         action=Action.FAIL_FAST,
@@ -210,6 +223,18 @@ RULES: dict[int, ErrorRule] = {
         keywords=("重复",),
     ),
     # ---------------- 字段类型转换类（正常情况下不应到这里） ----------------
+    1254060: ErrorRule(
+        code=1254060,
+        action=Action.FAIL_FAST,
+        title="TextFieldConvFail（文本字段格式错误）",
+        guidance=(
+            "文本字段写入时要求**纯字符串**，例如 \"断货预警\"。"
+            "⚠️ 实测踩坑：不要传 [{\"type\":\"text\",\"text\":...}] 富文本数组——"
+            "那是**读取**时飞书返回的结构，写入传它会报本错误。"
+            "「读结构 ≠ 写结构」是文本字段最易踩的坑。"
+        ),
+        keywords=("字符串", "富文本数组", "读取"),
+    ),
     1254062: ErrorRule(
         code=1254062,
         action=Action.FAIL_FAST,

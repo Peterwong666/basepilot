@@ -53,16 +53,20 @@ def _fail(field: str, ftype: FieldType, got: Any, want: str, code: str) -> Coerc
 # ---------------------------------------------------------------------------
 
 
-def coerce_text(field: str, ftype: FieldType, value: Any) -> list[dict[str, Any]]:
-    """Text(type=1)：[{"type":"text","text":"..."}]。官方要求富文本数组结构。
+def coerce_text(field: str, ftype: FieldType, value: Any) -> str:
+    """Text(type=1)：纯字符串。
+
+    ⚠️ 实测修正（cassette 录制发现）：写入时文本字段要的是**纯字符串**，
+    不是 `[{"type":"text","text":...}]` 富文本数组。后者是**读取**时
+    飞书返回的结构，写入传它会报 1254060 TextFieldConvFail。
+    这是「读结构 ≠ 写结构」的典型坑，纯 Mock 测不出来。
 
     field/ftype 参数保留是为了让所有编码器签名一致（便于表驱动分发）。
     """
     del field, ftype  # 签名一致性占位
     if value is None:
-        return []
-    text = value if isinstance(value, str) else str(value)
-    return [{"type": "text", "text": text}]
+        return ""
+    return value if isinstance(value, str) else str(value)
 
 
 def coerce_number(field: str, ftype: FieldType, value: Any) -> float:

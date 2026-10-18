@@ -1,8 +1,8 @@
 {
   "field_encoding_accuracy": 1.0,
   "unsafe_write_rejection_rate": 1.0,
-  "error_code_coverage": 32,
-  "error_code_total_rules": 32,
+  "error_code_coverage": 34,
+  "error_code_total_rules": 34,
   "max_inflight_write_per_table": 0,
   "token_fetch_count": 1,
   "business_request_count": 100,
