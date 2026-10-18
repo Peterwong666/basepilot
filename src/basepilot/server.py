@@ -1,13 +1,9 @@
-"""飞书 FDE 交付工具箱 —— MCP Server 组装。
+"""飞书 FDE 交付工具箱 —— MCP Server 组装与 CLI 入口。
 
-当前状态：**工具层尚未实现**（计划 D5）。
-
-这里先放一个可运行的最小入口，原因是 `pyproject.toml` 声明了
-`basepilot-mcp = "basepilot.server:main"`，若文件不存在则
-`pip install` 之后执行该命令会 ImportError —— 属于"承诺未兑现"。
-
-D5 会把真实的 6 个MCP 工具挂到 `mcp` 实例上。
-在那之前，本入口只提供自检与诊断命令，让仓库处于**可运行**状态。
+CLI 子命令：
+- `basepilot-mcp serve`         启动 MCP Server（stdio，供 Claude Code/Cursor 接入）
+- `basepilot-mcp doctor`        环境自检：当前能力与配置
+- `basepilot-mcp troubleshooting` 错误码处置速查（离线）
 """
 
 from __future__ import annotations
@@ -18,6 +14,15 @@ import sys
 from typing import Any
 
 from . import __version__
+
+
+def _cmd_serve() -> int:
+    """启动 MCP Server（stdio 传输）。"""
+    from .tools import build_server
+
+    server = build_server()  # 从环境变量读凭证
+    server.run()  # 默认 stdio
+    return 0
 
 
 def _cmd_doctor() -> int:
@@ -34,14 +39,15 @@ def _cmd_doctor() -> int:
         },
         "error_rules": len(RULES),
         "tools": {
-            "implemented": [],
-            "planned": [
-                "bitable_inspect_schema",
-                "bitable_search_records",
-                "bitable_create_records",
-                "bitable_update_records",
-                "bitable_delete_records",
-                "bitable_upload_attachment",
+            "implemented": [
+                "describe_table",
+                "create_records",
+                "update_records",
+                "delete_records",
+                "search_records",
+                "batch_upsert",
+                "dry_run_create",
+                "diagnose_scenarios",
             ],
         },
         "delivery_docs": [
@@ -79,17 +85,20 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("doctor", help="环境自检：当前能力与待实现项")
     sub.add_parser("troubleshooting", help="打印错误码处置速查")
+    sub.add_parser("serve", help="启动 MCP Server（stdio，供 Claude Code/Cursor 接入）")
 
     args = parser.parse_args(argv)
     if args.command == "doctor":
         return _cmd_doctor()
     if args.command == "troubleshooting":
         return _cmd_troubleshooting()
+    if args.command == "serve":
+        return _cmd_serve()
 
     parser.print_help()
     print(
-        "\n提示：MCP 工具层尚未上线（D5）。"
-        "离线校验请用 `make verify`，连真实租户请用 `make live-smoke`。"
+        "\n提示：启动 MCP Server 用 `basepilot-mcp serve`"
+        "（需先配置 BASEPILOT_APP_ID/SECRET）。"
     )
     return 0
 
