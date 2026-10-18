@@ -36,9 +36,7 @@ DIR_PREFIXES = ("docs/adr/",)
 # 允许 README 预告但本期不实现的目标路径（显式白名单，避免"偷偷跳过"）
 # 格式：路径 -> 计划完成阶段
 # ⚠️ 完成后必须从这里移除，让「0 计划中」真实反映完成态
-ALLOWED_PENDING: dict[str, str] = {
-    "docs/delivery/rollout_calendar.md": "D11",
-}
+ALLOWED_PENDING: dict[str, str] = {}
 
 
 def collect_references() -> set[str]:
