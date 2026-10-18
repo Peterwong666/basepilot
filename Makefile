@@ -65,7 +65,7 @@ evidence:
 	@$(PY) scripts/gen_evidence.py
 
 live-smoke:
-	@$(PY) scripts/live_smoke.py
+	@$(PY) scripts/live_smoke.py $(APP) $(TBL)
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache
