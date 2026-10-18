@@ -119,9 +119,12 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 | `docs/delivery/troubleshooting.md` | 34 条错误码 → 现场动作对照表（**由 `errors.py` 自动生成，零漂移**） |
 | `docs/delivery/client_training.md` | 给业务方的一页纸，不写代码也能用 |
 | `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（促活指标/追闭环/挖场景，`make adoption` 一键出周报） |
+| **`docs/delivery/delivery_handbook.md`** | **交付手册合集页 —— 五份交付文档的入口：先读哪份 / 每份回答什么问题 / 哪些数字是算的** |
 | `docs/limitations.md` | 已知限制 + 真实失败模式（单选传数组/日期传秒级/人员传字符串/读结构≠写结构） |
 
 **FDE 交付方法论五连**（全部「报告即代码」：数字从 `diagnosis.py`/cassette/eval 实算，改源数据重跑自动更新，测试锁结构）：
+
+> 入口从 **`docs/delivery/delivery_handbook.md`** 进 —— 它串起下面五份并标注每份的数字口径。
 
 | 文档 | 回答 | 生成脚本 |
 |---|---|---|
@@ -197,6 +200,7 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 | `docs/delivery/troubleshooting.md` | 错误码 → 现场动作排障 SOP（**由 `errors.py` 自动生成**） |
 | `docs/delivery/client_training.md` | 客户培训手册（给业务方的一页纸） |
 | `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（`make adoption` 一键出促活周报） |
+| **`docs/delivery/delivery_handbook.md`** | **交付手册合集页（五份方法论文档的入口与数字口径表）** |
 | `docs/delivery/discovery_report.md` | FDE 方法论①先做哪个（诊断报告，报告即代码） |
 | `docs/delivery/solution_blueprint.md` | FDE 方法论②怎么做（方案蓝图） |
 | `docs/delivery/case_backtest.md` | FDE 方法论③凭什么信你（案例回测） |
