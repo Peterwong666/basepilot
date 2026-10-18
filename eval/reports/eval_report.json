@@ -1,6 +1,6 @@
 {
-  "field_encoding_accuracy": 0.0,
-  "unsafe_write_rejection_rate": 0.0,
+  "field_encoding_accuracy": 1.0,
+  "unsafe_write_rejection_rate": 1.0,
   "error_code_coverage": 32,
   "error_code_total_rules": 32,
   "max_inflight_write_per_table": 0,
@@ -9,10 +9,9 @@
   "dry_run_purity": 0,
   "retry_success_rate": 0.0,
   "dryrun_prediction_accuracy": 0.0,
-  "golden_cases_total": 0,
-  "golden_cases_passed": 0,
+  "golden_cases_total": 19,
+  "golden_cases_passed": 19,
   "notes": [
-    "字段编码/拦截率/dry-run 相关指标待 coerce.py 与 client.py 就位后点亮",
-    "并发写峰值与重试成功率待 serialization.py 与 fault 测试就位后点亮"
+    "并发写峰值/dry-run/重试成功率待 client.py/serialization.py 就位后点亮"
   ]
 }

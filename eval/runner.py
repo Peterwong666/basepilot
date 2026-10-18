@@ -68,6 +68,81 @@ class EvalReport:
         return "\n".join(lines)
 
 
+def _measure_field_encoding() -> tuple[int, int, float, float]:
+    """字段编码指标 —— 直接运行真实编码器，不手写数字。
+
+    返回：(黄金用例通过数, 黄金用例总数, 字段编码正确率, 不可写拦截率)。
+
+    黄金用例就是 tests/test_coerce.py 里的用例。评测复跑同一套断言，
+    避免「测试一套、README 一套」的漂移。
+    """
+    from basepilot.coerce import CoerceError, coerce_value
+    from basepilot.schema import SYSTEM_READONLY_TYPES
+
+    # 正向用例：(字段, type, 输入, 期望输出)
+    positive: list[tuple[str, int, object, object]] = [
+        ("标题", 1, "断货预警", [{"type": "text", "text": "断货预警"}]),
+        ("库存", 2, 42, 42.0),
+        ("状态", 3, "正常", "正常"),
+        ("状态", 3, ["正常"], "正常"),
+        ("标签", 4, ["A", "B"], ["A", "B"]),
+        ("标签", 4, "A", ["A"]),
+        ("时间", 5, 1674206443, 1674206443000),
+        ("时间", 5, "1674206443000", 1674206443000),
+        ("已处理", 7, True, True),
+        ("已处理", 7, "yes", True),
+        ("负责人", 11, "ou_abc", [{"id": "ou_abc"}]),
+        ("链接", 15, "https://a.com", {"link": "https://a.com", "text": "https://a.com"}),
+        ("附件", 17, "tok_a", [{"file_token": "tok_a"}]),
+        ("关联", 18, ["recA"], ["recA"]),
+    ]
+    # 负向用例：(字段, type, 输入) —— 必须抛 CoerceError
+    negative: list[tuple[str, int, object]] = [
+        ("状态", 3, ["正常", "异常"]),  # 单选传数组
+        ("时间", 5, 123),  # 非法时间戳
+        ("金额", 2, "abc"),  # 非数值
+        ("负责人", 11, "user_x"),  # 非 ou_ 前缀
+        ("开关", 2, True),  # bool 不是 number
+    ]
+
+    passed = 0
+    total = len(positive) + len(negative)
+
+    for name, t, inp, want in positive:
+        try:
+            got = coerce_value(name, t, inp)
+            if got == want:
+                passed += 1
+        except CoerceError:
+            pass
+
+    for name, t, inp in negative:
+        try:
+            coerce_value(name, t, inp)
+        except CoerceError:
+            passed += 1
+
+    # 不可写拦截率：所有系统只读类型都必须 fail-fast
+    rejected = sum(
+        1
+        for ftype in SYSTEM_READONLY_TYPES
+        if _raises_coerce_error(ftype.value)
+    )
+    rejection_rate = rejected / len(SYSTEM_READONLY_TYPES) if SYSTEM_READONLY_TYPES else 0.0
+
+    return passed, total, passed / total if total else 0.0, rejection_rate
+
+
+def _raises_coerce_error(type_value: int) -> bool:
+    from basepilot.coerce import CoerceError, coerce_value
+
+    try:
+        coerce_value("测试字段", type_value, "x")
+        return False
+    except CoerceError:
+        return True
+
+
 def _measure_error_coverage() -> tuple[int, int]:
     """错误码覆盖率 —— 直接问规则表，不手写数字。"""
     from basepilot.errors import RULES
@@ -123,17 +198,23 @@ def run_eval() -> EvalReport:
     """
     report = EvalReport()
 
+    # 1/2. 字段编码正确率 + 不可写拦截率（coerce.py 已实现，可测）
+    passed, total, accuracy, rejection = _measure_field_encoding()
+    report.golden_cases_passed = passed
+    report.golden_cases_total = total
+    report.field_encoding_accuracy = accuracy
+    report.unsafe_write_rejection_rate = rejection
+
     # 3. 错误码覆盖率（已实现，可测）
-    covered, total = _measure_error_coverage()
+    covered, total_rules = _measure_error_coverage()
     report.error_code_coverage = covered
-    report.error_code_total_rules = total
+    report.error_code_total_rules = total_rules
 
     # 5. token 效率（已实现，可测）
     report.business_request_count = 100
     report.token_fetch_count = _measure_token_efficiency(100)
 
-    report.notes.append("字段编码/拦截率/dry-run 相关指标待 coerce.py 与 client.py 就位后点亮")
-    report.notes.append("并发写峰值与重试成功率待 serialization.py 与 fault 测试就位后点亮")
+    report.notes.append("并发写峰值/dry-run/重试成功率待 client.py/serialization.py 就位后点亮")
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out = REPORT_DIR / "eval_report.json"
