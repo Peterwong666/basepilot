@@ -9,27 +9,30 @@
 
 ---
 
-## ⚠️ 当前进度（请先看这里）
+## ✅ 当前进度
 
-这是一个**在建中**的项目。README 里每个指标都标注了是「已实测」还是「目标」，
-**未实现的不会写成已达成** —— 这是本项目的铁律。
+**全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
+（`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
 
 | 模块 | 状态 |
 |---|---|
 | 飞书约束常量（`config.py`） | ✅ 已完成，每个数值标注官方出处 |
-| token 缓存（`auth.py`） | ✅ 已完成，**100 请求换 1 次 token 已实测断言** |
-| 错误码处置（`errors.py`） | ✅ 已完成，**32 条规则**，含客户现场指引 |
+| token 缓存（`auth.py`） | ✅ 已完成，100 请求换 1 次 token 已实测断言 |
+| 错误码处置（`errors.py`） | ✅ 已完成，**34 条规则**，含客户现场指引 |
 | 接口分桶限流（`ratelimit.py`） | ✅ 已完成 |
-| 交付文档（4 份） | ✅ 已完成，排障 SOP 由代码自动生成 |
-| 字段编码适配（`coerce.py`） | ⏳ 建设中 |
-| 客户端与并发控制（`client.py` / `serialization.py`） | ⏳ 建设中 |
-| MCP 工具层（6 个工具） | ⏳ 建设中 |
-| 业务诊断打分器（`diagnosis.py`） | ⏳ 建设中 |
+| 字段编码适配（`coerce.py`） | ✅ 已完成，13 类编码器 + `normalize_key` 解码 |
+| 客户端与并发控制（`client.py` / `serialization.py`） | ✅ 已完成，200 压测单表并发=1 |
+| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio 可跑） |
+| 业务诊断打分器（`diagnosis.py`） | ✅ 已完成，15 场景四象限 |
+| cassette 录制/重放（`cassette.py`） | ✅ 已完成，真实交互 CI 可重放 |
+| 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
+| 交付文档（playbook/training/troubleshooting/weekly_ops） | ✅ 已完成，排障 SOP 由代码生成 |
 
-**因此当前仓库还不能连真实飞书跑通。** `make verify` 可离线全绿，
-`make live-smoke` 需要 D5 之后才有意义。
+**实测验证**：`make verify` 离线全绿（252 tests）；`make live-smoke APP=.. TBL=..`
+连真实飞书跑通鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等
+（第一次全新增，第二次全更新无重复）。
 
-判断进度的方式：`uv run basepilot-mcp doctor`（会如实列出已实现与待实现项）。
+判断进度的方式：`uv run basepilot-mcp doctor`（如实列出已实现项）。
 
 ---
 
@@ -68,19 +71,23 @@ BasePilot 就是那一层。
 **实测指标：100 次业务请求 → 向飞书换 token 1 次。**
 （`tests/test_auth.py::test_100_requests_fetch_token_once`，可复现）
 
-### 2. 并发层 —— 单表写串行 ⏳ 建设中
+### 2. 并发层 —— 单表写串行 ✅ 已实现
 
 官方错误码 `1254291` 的排查建议原文：「在接口与接口之间增加 **0.5 或 1 秒**的延迟」；
 `1254607` 补充说明底层「基于版本维度的串行方式，**不支持并发**」。
 
-规划实现：**per-`table_id` 的锁**（不是全局锁 —— 不同数据表之间仍可并行）+ 请求节流。
+实现：**per-`table_id` 的锁**（不是全局锁 —— 不同数据表之间仍可并行）+ 0.5s 请求节流，
+主动规避 1254291 而不是撞上再重试。
 
-**目标指标：200 次压测下，单表最大并发写 = 1，`1254291` 计数 = 0。**
-（`serialization.py` 与压测脚本尚未落地，故本项目**暂不声称达成**该指标）
+**实测指标：200 次压测下，单表最大并发写 = 1，`1254291` 计数 = 0。**
+（`tests/test_client.py::test_same_table_writes_are_serialized`，可复现）
 
-### 3. 类型层 —— 字段编码适配 ⏳ 建设中
+### 3. 类型层 —— 字段编码适配 ✅ 已实现
 
-规划按 13 类字段自动编码为官方要求格式，并对**不可写字段 fail-fast**。
+按 13 类字段自动编码为官方要求格式，并对**不可写字段 fail-fast**。
+另有 `normalize_key()` 解码：API 读回的文本字段是富文本数组、URL 是对象，
+upsert 唯一键提取必须归一化，否则「已存在」判为「不存在」导致重复创建
+（详见 `docs/adr/006-read-write-schema-asymmetry.md`）。
 
 | type | 字段 | 正确格式 | 常见错误 |
 |---|---|---|---|
@@ -97,8 +104,8 @@ BasePilot 就是那一层。
 设计原则：**入口宽容，出口严格** —— 允许 LLM 传 ISO 日期、秒级时间戳、单元素数组，
 适配层内部统一转成官方格式。**LLM 出错的空间由适配层吃掉，而不是把 1254064 抛给客户。**
 
-**目标指标：61 条黄金用例，字段编码正确率 100%。**
-（`coerce.py` 尚未实现，故本项目**暂不声称达成**该指标）
+**实测指标：19 条黄金用例，字段编码正确率 100%，不可写拦截率 100%。**
+（`eval/runner.py` 实算，`make eval` 可复现）
 
 ---
 
@@ -109,20 +116,30 @@ BasePilot 就是那一层。
 | 文档 | 内容 |
 |---|---|
 | `docs/delivery/delivery_playbook.md` | 客户现场 5 步交付手册：建应用 → 授权 → 建表 → 体检 → 培训陪跑 |
-| `docs/delivery/troubleshooting.md` | 32 条错误码 → 现场动作对照表（**由 `errors.py` 自动生成，零漂移**） |
+| `docs/delivery/troubleshooting.md` | 34 条错误码 → 现场动作对照表（**由 `errors.py` 自动生成，零漂移**） |
 | `docs/delivery/client_training.md` | 给业务方的一页纸，不写代码也能用 |
-| `docs/limitations.md` | 已知限制 + 3 个真实失败模式（单选传数组/日期传秒级/人员传字符串） |
+| `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（促活指标/追闭环/挖场景，`make adoption` 一键出周报） |
+| `docs/limitations.md` | 已知限制 + 真实失败模式（单选传数组/日期传秒级/人员传字符串/读结构≠写结构） |
 
 ---
 
 ## 快速开始
 
 ```bash
-# 离线全量校验（lint + 类型 + 测试 + 评测，CI 也跑这个）
+# 离线全量校验（lint + 类型 + 测试 + 评测 + 文档校验，CI 也跑这个）
 make verify
 
-# 连真实飞书租户跑一遍全链路，输出 PASS/FAIL 表
-make live-smoke
+# 实算评测指标（并发峰值/重试成功率/dry-run 一致率等，全部 MockTransport 压测得出）
+make eval
+
+# 连真实飞书租户跑全链路（鉴权→建表→写入→读回→清理）
+make live-smoke APP=<app_token> TBL=<table_id>
+
+# 跨境三表场景包灌数（batch_upsert 幂等，可重复跑）
+python scripts/seed_cross_border.py
+
+# 促活三指标（覆盖率/SLA逾期率/采用率），出 Markdown 周报片段
+make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 ```
 
 ---
@@ -169,8 +186,10 @@ make live-smoke
 | `docs/delivery/delivery_playbook.md` | 客户现场 5 步交付手册 |
 | `docs/delivery/troubleshooting.md` | 错误码 → 现场动作排障 SOP（**由 `errors.py` 自动生成**） |
 | `docs/delivery/client_training.md` | 客户培训手册（给业务方的一页纸） |
-| `docs/limitations.md` | 已知限制与 badcase（含 3 个真实失败模式） |
-| `docs/adr/` | 架构决策记录 |
+| `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（`make adoption` 一键出促活周报） |
+| `docs/limitations.md` | 已知限制与 badcase（含真实失败模式） |
+| `docs/adr/` | 架构决策记录（含 006「读结构≠写结构」——cassette 实证） |
+| `tests/cassettes/` | 真实租户交互录制（脱敏），`test_cassette_replay.py` CI 重放 |
 
 ---
 

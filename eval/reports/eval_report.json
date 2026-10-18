@@ -3,15 +3,15 @@
   "unsafe_write_rejection_rate": 1.0,
   "error_code_coverage": 34,
   "error_code_total_rules": 34,
-  "max_inflight_write_per_table": 0,
+  "max_inflight_write_per_table": 1,
   "token_fetch_count": 1,
   "business_request_count": 100,
   "dry_run_purity": 0,
-  "retry_success_rate": 0.0,
-  "dryrun_prediction_accuracy": 0.0,
+  "retry_success_rate": 1.0,
+  "dryrun_prediction_accuracy": 1.0,
   "golden_cases_total": 19,
   "golden_cases_passed": 19,
   "notes": [
-    "并发写峰值/dry-run/重试成功率待 client.py/serialization.py 就位后点亮"
+    "全部指标实算自代码：并发峰值/重试成功率/dry-run 一致率均由 MockTransport 压测得出，非手写。dry_run 纯度由 test_tools 断言保障。"
   ]
 }

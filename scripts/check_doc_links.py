@@ -35,16 +35,15 @@ DIR_PREFIXES = ("docs/adr/",)
 
 # 允许 README 预告但本期不实现的目标路径（显式白名单，避免"偷偷跳过"）
 # 格式：路径 -> 计划完成阶段
+# ⚠️ 完成后必须从这里移除，让「0 计划中」真实反映完成态
 ALLOWED_PENDING: dict[str, str] = {
     "docs/delivery/discovery_report.md": "D11",
     "docs/delivery/solution_blueprint.md": "D10",
-    "docs/delivery/weekly_ops.md": "D11",
     "docs/delivery/case_backtest.md": "D11",
     "docs/delivery/expansion_matrix.md": "D11",
     "docs/delivery/rollout_calendar.md": "D11",
     "docs/adr/003-serialization.md": "D2",
     "docs/adr/004-coerce-single-source-of-truth.md": "D3",
-    "docs/adr/006-diagnosis-methodology.md": "D7",
 }
 
 
