@@ -504,3 +504,38 @@ def test_json_is_parseable(scenarios: list[Scenario]) -> None:
 def test_thresholds_are_sane() -> None:
     """阈值必须 A > B，否则象限判定逻辑反了。"""
     assert THRESHOLD_AUTO > THRESHOLD_ASSISTED
+
+
+def test_fallback_scenarios_pass_validation() -> None:
+    """无 PyYAML 时的降级清单也必须五维齐全、能过 validate。
+
+    回归：`loss_impact` 第五维引入后，`_fallback_scenarios()` 一度没跟着加，
+    导致任何无 PyYAML 环境跑 `make diagnose` 直接崩 —— 违背 fallback
+    「缺依赖也不瘫」的设计初衷。此测试锁定降级清单与 DEFAULT_WEIGHTS 同步。
+    """
+    from basepilot.scenarios_loader import _fallback_scenarios
+
+    fallback = _fallback_scenarios()
+    assert fallback, "降级清单不能为空"
+    for s in fallback:
+        assert set(s.dimensions) == set(DEFAULT_WEIGHTS), (
+            f"{s.id}: 降级清单维度必须与 DEFAULT_WEIGHTS 完全一致"
+        )
+        s.validate()  # 不抛异常即通过
+
+
+def test_fallback_scenarios_align_with_yaml() -> None:
+    """降级清单里与 yaml 同 id 的场景，五维打分必须一致。
+
+    防止「改 yaml 不改 fallback」导致两条加载路径给出不同诊断结论。
+    """
+    from basepilot.scenarios_loader import _fallback_scenarios
+
+    yaml_by_id = {s.id: s for s in load_scenarios()}
+    for s in _fallback_scenarios():
+        yaml_s = yaml_by_id.get(s.id)
+        if yaml_s is None:
+            continue  # fallback 独有的场景不强求
+        assert s.dimensions == yaml_s.dimensions, (
+            f"{s.id}: fallback 与 yaml 打分漂移 {s.dimensions} != {yaml_s.dimensions}"
+        )
