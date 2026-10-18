@@ -387,6 +387,54 @@ def coerce_value(field_name: str, type_value: int, value: Any) -> Any:
     return value
 
 
+def normalize_key(value: Any) -> str:
+    """把 API **读回**的字段值归一化成可比较的字符串键（解码侧，与 encode 对称）。
+
+    「读结构 ≠ 写结构」的实锤：文本字段写入时是纯字符串，读回时
+    却是富文本数组 ``[{"type":"text","text":"..."}]``；URL 写入是纯字符串，
+    读回是 ``{"link": ..., "text": ..., "type":"url"}`` 对象。
+
+    batch_upsert 的「exists→update」判断要拿读回值当 dict 键，
+    若不做归一化会两种失败：
+    - ``TypeError: unhashable type: 'list'``（富文本数组不可哈希）
+    - ``str([...])`` / ``str({...})`` 得到 repr 字符串，与写入的纯值永远比对不上
+
+    归一化规则（宁可保守返回空串也不猜）：
+    - 富文本数组 ``[{"type":"text","text":...}]`` → 拼接所有 text 段
+    - URL 对象 ``{"link"/"text"}`` → text（显示文本与写入值一致）
+    - 单元素/多元素纯字符串数组（多选/单选读回） → 原样 join（多选键不常用，但保持一致性）
+    - None / 空 → ""
+    - 其它标量（数值/布尔/字符串） → str(value)
+    """
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):  # 先于 int 判断（bool 是 int 子类）
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        # 数值键：整数去小数点，避免 "95.0" != "95"
+        return str(int(value)) if float(value).is_integer() else str(value)
+    if isinstance(value, list):
+        # 富文本数组：所有元素都是 {"type":"text","text":...}
+        if value and all(
+            isinstance(seg, dict) and seg.get("type") == "text" for seg in value
+        ):
+            return "".join(str(seg.get("text", "")) for seg in value)
+        # 纯字符串数组（多选读回）
+        if all(isinstance(v, str) for v in value):
+            return ",".join(value)
+        return ""
+    if isinstance(value, dict):
+        # URL 读回：{"link": ..., "text": ..., "type": "url"}
+        if "text" in value:
+            return str(value["text"])
+        if "link" in value:
+            return str(value["link"])
+        return ""
+    return str(value)
+
+
 def coerce_record(
     fields_meta: dict[str, int], record: dict[str, Any]
 ) -> dict[str, Any]:
@@ -414,6 +462,7 @@ __all__ = [
     "CoerceError",
     "coerce_value",
     "coerce_record",
+    "normalize_key",
     "coerce_datetime",
     "coerce_user",
     "coerce_attachment",

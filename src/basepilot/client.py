@@ -27,7 +27,7 @@ from typing import Any
 import httpx
 
 from .auth import TokenCache
-from .coerce import coerce_record
+from .coerce import coerce_record, normalize_key
 from .config import (
     BACKOFF_BASE,
     BATCH_CREATE_MAX,
@@ -281,6 +281,73 @@ class BitableClient:
             data = await self._serializer.run(table_id, op)
             updated += len(data.get("records", []))
         return {"updated": updated}
+
+    async def upsert_records(
+        self,
+        app_token: str,
+        table_id: str,
+        records: list[dict[str, Any]],
+        key_field: str,
+        *,
+        fields_meta: dict[str, int] | None = None,
+    ) -> dict[str, Any]:
+        """按唯一键「存在即更新，不存在即新增」（跨境同步核心操作）。
+
+        为什么键提取必须在引擎层：API 读回的文本字段是富文本数组
+        ``[{"type":"text","text":...}]``，直接当 dict 键会
+        ``TypeError: unhashable type``，``str(list)`` 又永远比对不上写入值。
+        引擎统一用 :func:`normalize_key` 归一化，调用方不需要知道
+        「读结构 ≠ 写结构」这个坑。
+
+        Args:
+            records: 记录列表，每条须含 key_field。
+            key_field: 唯一键字段名，如 "SKU" / "订单号"。
+            fields_meta: 可选，缺省自动拉取（create/update 会复用，只拉一次）。
+
+        Returns:
+            {"created": n, "updated": m, "skipped": k}
+            skipped = 缺 key_field 而被跳过的记录数。
+        """
+        if not records:
+            return {"created": 0, "updated": 0, "skipped": 0}
+
+        meta = fields_meta or await self.list_fields(app_token, table_id)
+
+        # 查出 key_field 已存在的记录 → {归一化键: record_id}
+        found = await self.search_records(
+            app_token, table_id, field_names=[key_field]
+        )
+        existing: dict[str, str] = {}
+        for item in found:
+            k = normalize_key((item.get("fields") or {}).get(key_field))
+            if k:
+                existing[k] = str(item.get("record_id", ""))
+
+        to_update: list[dict[str, Any]] = []
+        to_create: list[dict[str, Any]] = []
+        skipped = 0
+        for rec in records:
+            if key_field not in rec:
+                skipped += 1
+                continue
+            kval = normalize_key(rec[key_field])
+            if kval in existing:
+                to_update.append({"record_id": existing[kval], "fields": rec})
+            else:
+                to_create.append(rec)
+
+        result: dict[str, Any] = {"created": 0, "updated": 0, "skipped": skipped}
+        if to_create:
+            r = await self.create_records(
+                app_token, table_id, to_create, fields_meta=meta
+            )
+            result["created"] = r["created"]
+        if to_update:
+            r = await self.update_records(
+                app_token, table_id, to_update, fields_meta=meta
+            )
+            result["updated"] = r["updated"]
+        return result
 
     async def delete_records(
         self, app_token: str, table_id: str, record_ids: list[str]

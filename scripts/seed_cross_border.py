@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import os
 import sys
@@ -24,6 +25,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from basepilot.client import BitableClient  # noqa: E402
+from basepilot.coerce import normalize_key  # noqa: E402
 from basepilot.scenarios.cross_border import (  # noqa: E402
     ADS_SAMPLE,
     INVENTORY_SAMPLE,
@@ -31,7 +33,8 @@ from basepilot.scenarios.cross_border import (  # noqa: E402
     TABLE_IDS,
 )
 
-APP_TOKEN = "__REDACTED_APP_TOKEN__"
+# 跨境演示 app（非密钥，多维表格 app_token 本身就是给前端/调用方可见的标识）
+CROSS_BORDER_APP = "__REDACTED_APP_TOKEN__"
 
 #: 每张表：(示例数据, 唯一键字段名)
 PLAN = {
@@ -41,53 +44,18 @@ PLAN = {
 }
 
 
-def normalize_key(value: object) -> str:
-    """把 API 读回的字段值归一化成可比较的字符串键。
-
-    读结构 ≠ 写结构的实锤：文本字段写入时是纯字符串，
-    读回时却是富文本数组 [{"type":"text","text":"..."}]。
-    唯一键提取必须兼容两种形态，否则 batch_upsert 的
-    "exists→update" 判断会失配（list 不可哈希 / 比对不上）。
-    """
-    if isinstance(value, list):
-        parts = [
-            seg.get("text", "")
-            for seg in value
-            if isinstance(seg, dict) and seg.get("type") == "text"
-        ]
-        return "".join(parts)
-    if value is None:
-        return ""
-    return str(value)
-
-
 async def seed_one(client: BitableClient, name: str) -> dict[str, object]:
-    """对一张表执行 batch_upsert 并读回校验。"""
+    """对一张表执行引擎层 upsert_records 并读回校验。"""
     rows, key_field = PLAN[name]
     table_id = TABLE_IDS[name]
 
-    # 1) 查唯一键已存在的记录 → 拆 update / create
-    existing = await client.search_records(APP_TOKEN, table_id)
-    by_key = {
-        normalize_key((rec.get("fields") or {}).get(key_field)): rec["record_id"]
-        for rec in existing
-        if normalize_key((rec.get("fields") or {}).get(key_field))
-    }
+    # 引擎层 upsert：键提取/归一化/拆 update+create 全在引擎内完成
+    r = await client.upsert_records(CROSS_BORDER_APP, table_id, rows, key_field)
+    created = r["created"]
+    updated = r["updated"]
 
-    to_update = [
-        {"record_id": by_key[r[key_field]], "fields": r}
-        for r in rows
-        if r[key_field] in by_key
-    ]
-    to_create = [r for r in rows if r[key_field] not in by_key]
-
-    if to_update:
-        await client.update_records(APP_TOKEN, table_id, to_update)
-    if to_create:
-        await client.create_records(APP_TOKEN, table_id, to_create)
-
-    # 2) 读回校验
-    after = await client.search_records(APP_TOKEN, table_id)
+    # 读回校验
+    after = await client.search_records(CROSS_BORDER_APP, table_id)
     got_keys = sorted(
         normalize_key((rec.get("fields") or {}).get(key_field))
         for rec in after
@@ -97,8 +65,8 @@ async def seed_one(client: BitableClient, name: str) -> dict[str, object]:
 
     return {
         "table": name,
-        "created": len(to_create),
-        "updated": len(to_update),
+        "created": created,
+        "updated": updated,
         "total_after": len(after),
         "keys_match": ok,
         "records": [
@@ -111,7 +79,7 @@ async def seed_one(client: BitableClient, name: str) -> dict[str, object]:
 async def check_one(client: BitableClient, name: str) -> dict[str, object]:
     """只读回，不写入。"""
     table_id = TABLE_IDS[name]
-    rows = await client.search_records(APP_TOKEN, table_id)
+    rows = await client.search_records(CROSS_BORDER_APP, table_id)
     return {
         "table": name,
         "total": len(rows),
@@ -122,6 +90,22 @@ async def check_one(client: BitableClient, name: str) -> dict[str, object]:
     }
 
 
+def _env_path() -> Path:
+    return Path(__file__).resolve().parent.parent / ".env"
+
+
+def _write_snapshot(results: list[dict[str, object]]) -> Path:
+    """把读回结果落盘（同步 IO，供 cassette / 报告引用，脱敏不含凭证）。"""
+    out = Path(__file__).resolve().parent.parent / "tmp" / "seed_result.json"
+    with contextlib.suppress(FileExistsError):
+        out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
+        json.dumps(results, ensure_ascii=False, indent=2, default=str),
+        encoding="utf-8",
+    )
+    return out
+
+
 async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -129,11 +113,14 @@ async def main() -> int:
     )
     args = parser.parse_args()
 
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    load_dotenv(_env_path())
     app_id = os.environ.get("BASEPILOT_APP_ID")
     app_secret = os.environ.get("BASEPILOT_APP_SECRET")
     if not app_id or not app_secret:
-        print("ERROR: 请在 .env 配置 BASEPILOT_APP_ID / BASEPILOT_APP_SECRET", file=sys.stderr)
+        print(
+            "ERROR: 请在 .env 配置 BASEPILOT_APP_ID / BASEPILOT_APP_SECRET",
+            file=sys.stderr,
+        )
         return 2
 
     client = BitableClient(app_id, app_secret)
@@ -153,16 +140,8 @@ async def main() -> int:
                 )
             results.append(res)
 
-        # 把读回结果落盘，供 cassette / 报告引用（脱敏：不含凭证）
-        out = Path(__file__).resolve().parent.parent / "tmp" / "seed_result.json"
-        try:
-            out.parent.mkdir(parents=True, exist_ok=True)
-        except FileExistsError:
-            pass  # 沙箱/代理层偶发 EEXIST 竞态，目录其实已存在
-        out.write_text(
-            json.dumps(results, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8",
-        )
+        # 把读回结果落盘（同步 helper 内完成，避免在 async 函数里做阻塞 IO）
+        out = await asyncio.to_thread(_write_snapshot, results)
         print(f"\n读回快照已写入 {out}")
 
         if not args.check and not all(r.get("keys_match") for r in results):

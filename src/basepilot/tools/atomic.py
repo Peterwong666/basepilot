@@ -120,50 +120,14 @@ async def batch_upsert(
     避免重复创建。先按 key_field search 出已存在的记录，
     命中的走 update，未命中的走 create。
 
+    键比较由引擎层 ``normalize_key`` 统一归一化（文本字段读回是
+    富文本数组，URL 是对象），调用方不需要关心「读结构 ≠ 写结构」。
+
     Args:
         records: 记录列表，每条是 {字段名: 值}，必须含 key_field。
         key_field: 作为唯一键的字段名，如 "SKU" / "订单号"。
     """
-    if not records:
-        return {"created": 0, "updated": 0}
-
-    # 收集所有 key 值，一次性查出已存在的
-    keys = [str(rec[key_field]) for rec in records if key_field in rec]
-    existing: dict[str, str] = {}  # key 值 → record_id
-    if keys:
-        found = await client.search_records(
-            app_token,
-            table_id,
-            field_names=[key_field],
-        )
-        for item in found:
-            f = item.get("fields", {})
-            kv = f.get(key_field)
-            # 文本字段返回的是 [{"type":"text","text":...}] 结构
-            if isinstance(kv, list) and kv and isinstance(kv[0], dict):
-                kv = kv[0].get("text", "")
-            if kv is not None:
-                existing[str(kv)] = str(item.get("record_id"))
-
-    to_update: list[dict[str, Any]] = []
-    to_create: list[dict[str, Any]] = []
-    for rec in records:
-        if key_field not in rec:
-            continue
-        kval = str(rec[key_field])
-        if kval in existing:
-            to_update.append({"record_id": existing[kval], "fields": rec})
-        else:
-            to_create.append(rec)
-
-    result: dict[str, Any] = {"created": 0, "updated": 0}
-    if to_create:
-        r = await client.create_records(app_token, table_id, to_create)
-        result["created"] = r["created"]
-    if to_update:
-        r = await client.update_records(app_token, table_id, to_update)
-        result["updated"] = r["updated"]
-    return result
+    return await client.upsert_records(app_token, table_id, records, key_field)
 
 
 __all__ = [
