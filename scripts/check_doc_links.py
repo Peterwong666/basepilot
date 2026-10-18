@@ -42,8 +42,6 @@ ALLOWED_PENDING: dict[str, str] = {
     "docs/delivery/case_backtest.md": "D11",
     "docs/delivery/expansion_matrix.md": "D11",
     "docs/delivery/rollout_calendar.md": "D11",
-    "docs/adr/003-serialization.md": "D2",
-    "docs/adr/004-coerce-single-source-of-truth.md": "D3",
 }
 
 
