@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 工具缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# 密钥（重要：app_secret / webhook 一律不入库）
+.env
+.env.*
+!.env.example
+
+# 录制回放中的敏感占位符映射（真实 ID 与token 的对应关系）
+tests/cassettes/.replacements.json
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: 安装 Python 3.11
+        run: uv python install 3.11
+
+      - name: 安装依赖
+        run: uv sync --all-extras --dev
+
+      - name: ruff 静态检查
+        run: uv run ruff check src tests eval scripts
+
+      - name: ruff 格式检查
+        run: uv run ruff format --check src tests eval scripts
+
+      - name: mypy strict 类型检查
+        run: uv run mypy src
+
+      - name: pytest（全部离线，录制回放）
+        run: uv run pytest --cov=basepilot --cov-report=xml --cov-report=term
+
+      - name: 评测（8 项指标）
+        run: uv run python eval/runner.py
+
+      - name: 上传覆盖率
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: 安装 Python 3.11
+        run: uv python install 3.11
+
+      - name: 安装依赖
+        run: uv sync --all-extras --dev
+
+      - name: 构建镜像
+        run: docker build -t basepilot:ci .
+
+      - name: 镜像能启动且 --help 正常
+        run: |
+          docker run --rm basepilot:ci --help || \
+          docker run --rm basepilot:ci python -c "import basepilot; print(basepilot.__version__)"
