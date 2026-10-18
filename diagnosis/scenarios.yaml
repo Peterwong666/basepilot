@@ -1,0 +1,235 @@
+# 跨境电商运营场景清单（诊断打分器的输入）
+#
+# 打分依据来自 6 年亚马逊运营的一手观察（2021.10-2025.12，宠物用品类目做到Top 20）。
+# 每个场景的 `evidence` 字段写明「这个分数是凭什么给的」，因为：
+# **没有一手依据的诊断报告，等于拍脑袋。**
+#
+# 四维打分各0-5：
+#   frequency 高频       —— 发生频率，权重 0.30
+#   rule_clarity 规则明确 —— 是否有清晰判据，权重 0.25
+#   data_readiness 有数据 —— 是否有历史结构化数据，权重 0.25
+#   fault_tolerance 错得起—— 出错代价的���逆性，权重 0.20
+#
+# 注意 D 象限的场景是**故意保留的劝退案例**。真实的咨询交付里，
+# 敢明确说「这个不值得做」比多做一个勉强上线的场景更负责。
+
+- id: ads_daily_report
+  name: 广告日报汇总与异常标注
+  frequency: 5
+  rule_clarity: 4
+  data_readiness: 5
+  fault_tolerance: 5
+  loss_impact: 5
+  human_minutes_per_run: 90
+  runs_per_year: 365
+  human_rank: 1
+  evidence: >-
+    6 年运营期间每日从广告后台导出 7-15 份 CSV，人工合并、按站点分表、
+    标注 ACOS 超标行。判据非常明确（ACOS>35% 标红），且标错可回滚重标。
+    这是全流程中最标准的高频重复场景。
+
+- id: stockout_risk_alert
+  name: 断货风险预警与通知
+  frequency: 5
+  rule_clarity: 5
+  data_readiness: 5
+  fault_tolerance: 5
+  loss_impact: 5
+  human_minutes_per_run: 20
+  runs_per_year: 365
+  human_rank: 2
+  evidence: >-
+    判据是纯除法：当前库存 ÷ 日均销量 < 7 天即告急。
+    规则明确到可以写成公式，误报只是多看一条，不会造成损失。
+    断货对跨境业务是直接损失（Listing权重下滑 + 广告费白烧），
+    所以即便高频也必须盯死。
+
+- id: inventory_health_check
+  name: 库存健康巡检与补货建议
+  frequency: 5
+  rule_clarity: 3
+  data_readiness: 5
+  fault_tolerance: 3
+  loss_impact: 4
+  human_minutes_per_run: 45
+  runs_per_year: 365
+  human_rank: 3
+  evidence: >-
+    巡检本身规则明确，但「该补多少」涉及销量预测，规则模糊。
+    补货量错了会压货占资金（真实损失），所以容错度中等。
+    适合工作流触发 + 人工确认补货量。
+
+- id: review_triage_draft
+  name: 差评归因与回复草稿
+  frequency: 5
+  rule_clarity: 2
+  data_readiness: 4
+  fault_tolerance: 4
+  loss_impact: 4
+  human_minutes_per_run: 30
+  runs_per_year: 365
+  human_rank: 4
+  evidence: >-
+    差评文本高度口语化，归因需要语义理解（产品质量/物流/描述不符/使用体验），
+    规则写不出来 —— 这正是 LLM 擅长的场景。有历史差评文本可检索。
+    回复草稿错了也只是措辞不当，不会直接造成损失。
+
+- id: ads_abnormal_escalation
+  name: 广告异常升级与抄送
+  frequency: 5
+  rule_clarity: 5
+  data_readiness: 5
+  fault_tolerance: 4
+  loss_impact: 4
+  human_minutes_per_run: 15
+  runs_per_year: 365
+  human_rank: 5
+  evidence: >-
+    判据已由上游（广告日报）算出，剩下只是通知与升级。
+    纯规则搬运，原生工作流零成本完成，不需要 AI。
+
+- id: listing_compliance_check
+  name: Listing 合规自查
+  frequency: 3
+  rule_clarity: 5
+  data_readiness: 5
+  fault_tolerance: 5
+  loss_impact: 5
+  human_minutes_per_run: 40
+  runs_per_year: 156
+  human_rank: 6
+  evidence: >-
+    每周跑一次，判据来自各站点政策文档（禁用词、类目限制、尺寸图要求）。
+    规则完全可枚举，写成检查表即��自动化。
+
+- id: competitor_price_monitor
+  name: 竞品价格监控
+  frequency: 5
+  rule_clarity: 4
+  data_readiness: 3
+  fault_tolerance: 5
+  loss_impact: 3
+  human_minutes_per_run: 25
+  runs_per_year: 365
+  evidence: >-
+    日频、判据清楚（低于我方 X% 触发）。但竞品数据需要外部抓取，
+    飞书侧没有历史沉淀，属于「有规则但需先解决数据源」。
+
+- id: search_term_analysis
+  name: 站内搜索词报告分析
+  frequency: 3
+  rule_clarity: 2
+  data_readiness: 4
+  fault_tolerance: 4
+  loss_impact: 3
+  human_minutes_per_run: 60
+  runs_per_year: 156
+  human_rank: 7
+  evidence: >-
+    每周分析数百个搜索词的表现，找出「有曝光无点击」「高点击低转化」类目。
+    判断需要语义归类，规则写不出来 —— 适合 AI 聚类 + 人工确认。
+
+- id: return_reason_stats
+  name: 退货原因归类统计
+  frequency: 3
+  rule_clarity: 3
+  data_readiness: 4
+  fault_tolerance: 4
+  loss_impact: 3
+  human_minutes_per_run: 50
+  runs_per_year: 156
+  human_rank: 8
+  evidence: >-
+    每周把退货原因表归类统计。分类规则介于清晰与模糊之间，
+    大部分可以枚举，少部分需要判断。
+
+- id: voc_mining_new_product
+  name: 新品评论 VOC 挖掘
+  frequency: 1
+  rule_clarity: 1
+  data_readiness: 4
+  fault_tolerance: 5
+  loss_impact: 4
+  human_minutes_per_run: 120
+  runs_per_year: 24
+  evidence: >-
+    月频、深度分析、需要人工阅读与跨品类归纳。
+    一年跑 24 次，一次性搭建自动化的投入收不回来；
+    但每月人工做一次又是纯体力活。折中做法：用 AI 做初筛聚类，人工看结论。
+
+- id: promo_retrospective
+  name: 促销活动效果复盘
+  frequency: 1
+  rule_clarity: 2
+  data_readiness: 4
+  fault_tolerance: 5
+  loss_impact: 2
+  human_minutes_per_run: 90
+  runs_per_year: 12
+  evidence: >-
+    月频。数据齐全（广告+销售+库存都有），但复盘涉及归因判断
+    （销量增长到底来自促销还是自然波），规则写不出来。
+    适合 AI 出初稿，人工做最终判断。
+
+- id: supplier_lead_time_tracking
+  name: 供应链交期跟踪
+  frequency: 3
+  rule_clarity: 3
+  data_readiness: 0
+  fault_tolerance: 3
+  loss_impact: 3
+  human_minutes_per_run: 40
+  runs_per_year: 156
+  hard_reject: no_data
+  evidence: >-
+    周频、规则明确（承诺交期 vs 实际交期），
+    **但交期数据在供应商自己的系统里，没有历史结构化数据沉淀到飞书**。
+    没有数据源就上自动化，等于让 AI 凭空编交期 —— 这是典型的 D 象限。
+    正确的前置动作是「先把交期登记规范做起来」，而不是「先上AI」。
+    本项目明确不建议在数据源就位前投入。
+
+- id: vat_tax_compliance
+  name: 多国VAT/税务合规校验
+  frequency: 2
+  rule_clarity: 4
+  data_readiness: 1
+  fault_tolerance: 1
+  loss_impact: 5
+  human_minutes_per_run: 60
+  runs_per_year: 48
+  hard_reject: irreversible
+  evidence: >-
+    季频。判据本身可枚举（各站点税率、申报周期），但**税务申报是外部可见、
+    不可逆的动作** —— 一次错误申报会引来真实罚款与合规记录。
+    加上历史申报数据存放在财务系统而非飞书，两个条件都踩线。
+    本项目明确建议：**这一块交给专业财税服务与持证会计，AI 只做资料预检，
+    不参与申报决策。** 把不可逆且高风险的环节交给自动化，是交付伦理的红线。
+
+- id: review_keyword_alert
+  name: 评论关键词预警
+  frequency: 5
+  rule_clarity: 4
+  data_readiness: 3
+  fault_tolerance: 5
+  loss_impact: 3
+  human_minutes_per_run: 10
+  runs_per_year: 365
+  evidence: >-
+    日频、判据极简（评论含特定负面词即提醒）、误报无代价。
+    但价值量小 —— 每天只有 10 分钟。这是典型的
+    「指数很高但优先级靠后」的场景：值得做，但不该第一个做。
+    报告里会专门用它演示「指数 ≠ 优先级」。
+
+- id: support_ticket_routing
+  name: 客服工单分类与转派
+  frequency: 5
+  rule_clarity: 3
+  data_readiness: 3
+  fault_tolerance: 4
+  loss_impact: 2
+  human_minutes_per_run: 35
+  runs_per_year: 365
+  human_rank: 9
+  evidence: >-
+    日频、量大。但工单文本在客服系统内，需要先打通。
+    分类规则相对固定（退换货/物流/产品咨询），适合规则优先、AI 兜底。

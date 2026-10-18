@@ -25,6 +25,8 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "respx>=0.22",
+    "pyyaml>=6.0",
+    "types-pyyaml>=6.0",
 ]
 
 [build-system]
@@ -61,5 +63,9 @@ mypy_path = "src"
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["respx.*"]
+module = ["respx.*", "basepilot.scenarios_loader"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["basepilot.scenarios_loader"]
+warn_unreachable = false
