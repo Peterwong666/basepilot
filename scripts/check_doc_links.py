@@ -37,7 +37,6 @@ DIR_PREFIXES = ("docs/adr/",)
 # 格式：路径 -> 计划完成阶段
 # ⚠️ 完成后必须从这里移除，让「0 计划中」真实反映完成态
 ALLOWED_PENDING: dict[str, str] = {
-    "docs/delivery/expansion_matrix.md": "D11",
     "docs/delivery/rollout_calendar.md": "D11",
 }
 
