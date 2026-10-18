@@ -205,6 +205,7 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 | `docs/limitations.md` | 已知限制与 badcase（含真实失败模式） |
 | `docs/adr/` | 架构决策记录（含 006「读结构≠写结构」——cassette 实证） |
 | `tests/cassettes/` | 真实租户交互录制（脱敏），`test_cassette_replay.py` CI 重放 |
+| `docs/PROJECT_RETROSPECTIVE.md` | **项目复盘及学习文档**：主要节点（问题→分析→解决）+ 结构分析，全面了解项目从这里入手 |
 
 ---
 
