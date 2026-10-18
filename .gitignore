@@ -27,3 +27,5 @@ tests/cassettes/.replacements.json
 .vscode/
 .idea/
 .DS_Store
+# 灌数/演示临时产物
+tmp/
