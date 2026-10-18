@@ -1,4 +1,4 @@
-.PHONY: help verify lint fmt typecheck test eval live-smoke clean evidence docs docs-check troubleshoot diagnose
+.PHONY: help verify lint fmt typecheck test eval live-smoke clean evidence docs docs-check troubleshoot diagnose adoption
 
 # 直接用 .venv 里的二进制，不走 `uv run`：
 #  1. mypy 2.x 直接 spawn 会失败，`python -m` 更稳
@@ -22,6 +22,7 @@ help:
 	@echo "  make docs-check  校验文档链接与代码零漂移（CI 门禁）"
 	@echo "  make troubleshoot 打印错误码处置速查（离线）"
 	@echo "  make evidence    生成证据卡数字"
+	@echo "  make adoption    促活三指标（覆盖率/SLA逾期率/采用率），出 Markdown 周报片段"
 	@echo "  make live-smoke  连真实飞书租户跑全链路（D5 之后可用）"
 	@echo "  make setup       安装依赖（首次或改动 pyproject 后）"
 
@@ -66,6 +67,10 @@ evidence:
 
 live-smoke:
 	@$(PY) scripts/live_smoke.py $(APP) $(TBL)
+
+adoption:
+	@$(PY) scripts/adoption.py --app $(APP) --table $(TBL) \
+		--key-field $(KEY) --baseline $(BASELINE) $(EXTRA)
 
 clean:
 	rm -rf .pytest_cache .mypy_cache .ruff_cache

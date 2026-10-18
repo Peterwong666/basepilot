@@ -67,9 +67,13 @@ filter_ = {
 }
 ```
 
-> 📋 **Backlog**：把这三条固化成 `make adoption` 一键出周报
-> （当前需要手动跑上面命令）。playbook 里已引用 `make adoption`，
-> 实现后排进 D12。
+> ✅ **D12 已实现**：这三条已固化成 `make adoption` 一键出周报。
+> 用法：
+> ```bash
+> make adoption APP=<app> TBL=<表ID> KEY=<唯一键字段> BASELINE=<基准数> \
+>   EXTRA="--status-field 处理状态 --date-field 差评日期 --sla-days 7"
+> ```
+> 采用率需表含 User 字段 + `--target-users`，否则如实报 pending（不编造数字）。
 
 ### ② 追未闭环异常（25 分钟）
 
