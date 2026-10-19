@@ -1,7 +1,8 @@
 # 已知限制与 Badcase 记录
 
 > 本文档的价值在于**诚实暴露弱点**。面试时被问出来很被动，主动写出来反而是加分项。
-> 每条 badcase 都配一个回归用例（见 `tests/contract/`），所以它们不会再次发生。
+> 每条 badcase 都有对应的回归用例（在 `tests/test_coerce.py` / `tests/test_errors.py`，
+> 由 `make test` 校验），所以它们不会再次发生。
 
 ---
 
