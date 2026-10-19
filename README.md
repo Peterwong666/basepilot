@@ -4,8 +4,8 @@
 > Claude Code / Cursor 可**安全读写**的业务台账。
 
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/python-3.11%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **[English](#english-readme) · 简体中文**
 
@@ -193,7 +193,7 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 
 **全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
 （`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-`make verify` 离线全绿（**292 tests**）；`make live-smoke` 连真实飞书跑通
+`make verify` 离线全绿（**297 tests**）；`make live-smoke` 连真实飞书跑通
 鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
 第二次全更新无重复）。
 
