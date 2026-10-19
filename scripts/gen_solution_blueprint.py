@@ -32,7 +32,6 @@ from basepilot.scenarios.cross_border import (  # noqa: E402
     ADS_SAMPLE,
     INVENTORY_SAMPLE,
     REVIEW_SAMPLE,
-    TABLE_IDS,
 )
 from basepilot.scenarios_loader import load_scenarios  # noqa: E402
 
@@ -42,12 +41,16 @@ OUT = ROOT / "docs" / "delivery" / "solution_blueprint.md"
 TOP_N = 3
 
 #: 场景名 → 对应的数据表/样本（把抽象场景锚定到已建好的三表）
+#:
+#: **只写表名不写 table_id**：table_id 是租户身份标识，不能进公开交付物；
+#: 且对读者没有信息价值 —— 客户关心的是「用哪张表」，不是「表的内部 ID」。
+#: 需要真实 ID 时由 BasePilot 从环境变量读（见 scenarios.cross_border.table_ids）。
 SCENARIO_TABLE_MAP = {
-    "库存健康巡检与补货建议": ("库存健康表", TABLE_IDS["inventory"], INVENTORY_SAMPLE),
-    "断货风险预警与通知": ("库存健康表", TABLE_IDS["inventory"], INVENTORY_SAMPLE),
-    "广告日报汇总与异常标注": ("广告异常表", TABLE_IDS["ads"], ADS_SAMPLE),
-    "广告异常升级与抄送": ("广告异常表", TABLE_IDS["ads"], ADS_SAMPLE),
-    "差评归因与回复草稿": ("差评处理表", TABLE_IDS["review"], REVIEW_SAMPLE),
+    "库存健康巡检与补货建议": ("库存健康表", INVENTORY_SAMPLE),
+    "断货风险预警与通知": ("库存健康表", INVENTORY_SAMPLE),
+    "广告日报汇总与异常标注": ("广告异常表", ADS_SAMPLE),
+    "广告异常升级与抄送": ("广告异常表", ADS_SAMPLE),
+    "差评归因与回复草稿": ("差评处理表", REVIEW_SAMPLE),
 }
 
 
@@ -106,8 +109,8 @@ def render(results: list) -> str:  # type: ignore[type-arg]
     lines.append("| # | 业务环节 | 指数 | 象限 | 年省工时 | 对应数据表 |")
     lines.append("|---|---|---|---|---|---|")
     for i, d in enumerate(top, 1):
-        tbl_name, tbl_id, _ = SCENARIO_TABLE_MAP.get(
-            d.scenario.name, ("（待建）", "—", [])
+        tbl_name, _ = SCENARIO_TABLE_MAP.get(
+            d.scenario.name, ("（待建）", [])
         )
         lines.append(
             f"| {i} | {d.scenario.name} | {d.score:.0f} | "
@@ -123,8 +126,8 @@ def render(results: list) -> str:  # type: ignore[type-arg]
     lines.append("")
     for i, d in enumerate(top, 1):
         s = d.scenario
-        tbl_name, tbl_id, sample = SCENARIO_TABLE_MAP.get(
-            s.name, ("（待建）", "—", [])
+        tbl_name, sample = SCENARIO_TABLE_MAP.get(
+            s.name, ("（待建）", [])
         )
         lines.append(f"### {i}. {s.name}")
         lines.append("")
@@ -135,7 +138,7 @@ def render(results: list) -> str:  # type: ignore[type-arg]
                      f"{s.human_minutes_per_run / 60 * s.runs_per_year:.0f} 小时/年")
         lines.append(f"- **预计年省**：{d.annual_hours_saved:.0f} 小时")
         lines.append(f"- **落地形态**：{d.strategy}")
-        lines.append(f"- **数据表**：{tbl_name}（`{tbl_id}`）")
+        lines.append(f"- **数据表**：{tbl_name}")
         lines.append("")
         lines.append("**业务依据**：" + s.evidence.strip())
         lines.append("")

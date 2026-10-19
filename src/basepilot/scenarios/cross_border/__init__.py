@@ -11,13 +11,39 @@
 
 from __future__ import annotations
 
-#: 三张表的 table_id（由 scripts/setup_tables.py 在真实租户建出后回填）
-#: 这是示例，实际值见 .env / tests/cassettes 配置
-TABLE_IDS = {
-    "inventory": "__REDACTED_TABLE_ID__",
-    "ads": "__REDACTED_TABLE_ID__",
-    "review": "__REDACTED_TABLE_ID__",
+import os
+
+#: 三张表在**示例/文档语境**下的表名占位符。
+#:
+#: **为什么不存真实 table_id**：table_id 是租户身份标识，公开它等于告诉别人
+#: 「这个企业租户里有这么一张表」。cassette 与源码都做过这层脱敏
+#: （见 `cassette.redact_identifiers` 与 `tests/test_no_secrets_in_repo.py`），
+#: 这里保持一致。
+#:
+#: **真实 table_id 怎么拿**：跑 `scripts/setup_tables.py` 建表后写入 `.env`
+#: （已 gitignore），再由 `table_ids()` 读取。
+TABLE_ID_PLACEHOLDERS = {
+    "inventory": "tblxxxxxxxxxxxx",
+    "ads": "tblxxxxxxxxxxxx",
+    "review": "tblxxxxxxxxxxxx",
 }
+
+
+def table_ids() -> dict[str, str]:
+    """从环境变量读三张表的真实 table_id（缺配置则返回占位符）。
+
+    环境变量（可选，缺任一项该项回退占位符）：
+        BASEPILOT_TABLE_INVENTORY / BASEPILOT_TABLE_ADS / BASEPILOT_TABLE_REVIEW
+    """
+    keys = {
+        "inventory": "BASEPILOT_TABLE_INVENTORY",
+        "ads": "BASEPILOT_TABLE_ADS",
+        "review": "BASEPILOT_TABLE_REVIEW",
+    }
+    return {
+        name: os.environ.get(key) or TABLE_ID_PLACEHOLDERS[name]
+        for name, key in keys.items()
+    }
 
 #: 库存健康表示例数据（SKU 为唯一键，供 batch_upsert 演示）
 INVENTORY_SAMPLE = [

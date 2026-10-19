@@ -20,11 +20,12 @@ import pytest
 
 from basepilot.cassette import ReplayTransport
 from basepilot.client import BitableClient
-from basepilot.scenarios.cross_border import TABLE_IDS
 
 CASSETTE = Path(__file__).parent / "cassettes" / "cross_border_upsert.jsonl"
+# 重放不真发请求，因此 app_token / table_id 用与 cassette 内一致的占位符即可 ——
+# 真实值不得入库（见 tests/test_no_secrets_in_repo.py）
 APP = "__REDACTED_APP_TOKEN__"
-TABLE = TABLE_IDS["inventory"]
+TABLE = "__REDACTED_TABLE_ID__"
 PROBE_SKU = "__CASSETTE_PROBE__"
 
 

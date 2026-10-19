@@ -32,14 +32,16 @@ from dotenv import load_dotenv  # noqa: E402
 
 from basepilot.cassette import RecordingTransport  # noqa: E402
 from basepilot.client import BitableClient  # noqa: E402
-from basepilot.scenarios.cross_border import TABLE_IDS  # noqa: E402
 
 CASSETTE = (
     Path(__file__).resolve().parent.parent
     / "tests" / "cassettes" / "cross_border_upsert.jsonl"
 )
-APP = "__REDACTED_APP_TOKEN__"
-TABLE = TABLE_IDS["inventory"]
+#: 真实 app_token / table_id 从环境变量读，不写死在本仓库里
+#: （录制需要真实值，但真实值不该进版本库 —— 见 tests/test_no_secrets_in_repo.py）
+#: 注意必须在 load_dotenv 之后读，故在 main() 内取用。
+APP = ""
+TABLE = ""
 PROBE_SKU = "__CASSETTE_PROBE__"
 
 
@@ -55,9 +57,16 @@ def _prepare() -> tuple[str, str]:
 
 
 async def main() -> int:
+    global APP, TABLE
     app_id, app_secret = _prepare()
+    # _prepare() 里已 load_dotenv，此处才能读到值
+    APP = os.environ.get("BASEPILOT_APP_TOKEN", "")
+    TABLE = os.environ.get("BASEPILOT_TABLE_INVENTORY", "")
     if not app_id or not app_secret:
         print("缺少 BASEPILOT_APP_ID / BASEPILOT_APP_SECRET", file=sys.stderr)
+        return 2
+    if not APP or not TABLE:
+        print("缺少 BASEPILOT_APP_TOKEN / BASEPILOT_TABLE_INVENTORY", file=sys.stderr)
         return 2
 
     # 包一层录制 transport（沿用 BitableClient 默认 30s 超时，避免连接抖动）

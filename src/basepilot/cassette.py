@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +29,39 @@ import httpx
 #: 占位符（入库的 cassette 里真实凭证都被换成这些，本身就是脱敏标记非密钥）
 REDACTED_SECRET = "__REDACTED_APP_SECRET__"  # noqa: S105
 REDACTED_TOKEN = "__REDACTED_TENANT_TOKEN__"  # noqa: S105
+#: 全部为脱敏占位标记，非密钥本身（S105 误报不适用）
+REDACTED_APP_ID = "__REDACTED_APP_ID__"  # noqa: S105
+REDACTED_APP_TOKEN = "__REDACTED_APP_TOKEN__"  # noqa: S105
+REDACTED_TABLE_ID = "__REDACTED_TABLE_ID__"  # noqa: S105
+REDACTED_RECORD_ID = "__REDACTED_RECORD_ID__"  # noqa: S105
+
+#: 租户标识符的识别规则 —— 这些不是密钥，但会暴露「这是哪个租户的哪个应用/哪张表」，
+#: 同样不该进公开仓库。
+#:
+#: **为什么 secret 脱敏还不够**：app_secret 是凭证，而 app_id / app_token /
+#: table_id / record_id 是**租户身份标识**。公开它们等于告诉别人
+#: 「这个 app 属于某个具体企业」，配合 cassette 里的业务数据可还原出真实业务现场。
+_IDENTIFIER_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bcli_[A-Za-z0-9]{16,}\b"), REDACTED_APP_ID),
+    # app_token 是 24 位随机串，只在 base/bitable/v1/apps/{token} 路径段出现
+    (re.compile(r"(?<=/apps/)[A-Za-z0-9]{20,}(?=/)"), REDACTED_APP_TOKEN),
+    (re.compile(r"\btbl[A-Za-z0-9]{10,}\b"), REDACTED_TABLE_ID),
+    (re.compile(r"\brec[A-Za-z0-9]{10,}\b"), REDACTED_RECORD_ID),
+    # query 里的 table_id= / record_id= 参数
+    (re.compile(r"(?<=[?&]table_id=)[A-Za-z0-9]{10,}"), REDACTED_TABLE_ID),
+    (re.compile(r"(?<=[?&]record_id=)[A-Za-z0-9]{10,}"), REDACTED_RECORD_ID),
+)
+
+
+def redact_identifiers(text: str) -> str:
+    """把字符串里的租户标识符替换为占位符（不依赖调用方传 secrets）。"""
+    for pattern, placeholder in _IDENTIFIER_PATTERNS:
+        text = pattern.sub(placeholder, text)
+    return text
 
 
 def _redact_json(obj: Any, secrets: set[str]) -> Any:
-    """递归把 json 里的真实凭证值替换为占位符。"""
+    """递归把 json 里的真实凭证值与租户标识符替换为占位符。"""
     if isinstance(obj, dict):
         return {k: _redact_json(v, secrets) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -40,7 +70,8 @@ def _redact_json(obj: Any, secrets: set[str]) -> Any:
         for s in secrets:
             if s and s in obj:
                 obj = obj.replace(s, REDACTED_TOKEN if s.startswith("t-") else REDACTED_SECRET)
-        return obj
+        # 凭证之外，租户标识符也必须脱敏
+        return redact_identifiers(obj)
     return obj
 
 
@@ -86,7 +117,8 @@ class RecordingTransport(httpx.AsyncBaseTransport):
         entry = {
             "seq": self._seq,
             "method": request.method,
-            "path": request.url.path,
+            # path 段里嵌着 app_token / table_id，同样要脱敏
+            "path": redact_identifiers(request.url.path),
             "request": {"json": _redact_json(req_body, self._secrets)},
             "response": {
                 "status": response.status_code,
@@ -129,13 +161,19 @@ class ReplayTransport(httpx.MockTransport):
             self._idx += 1
 
             # 断言 method/path 与录制一致
+            # 注意：path 两侧都过 redact_identifiers。
+            # 录制侧已脱敏，若只对录制侧脱敏、实发侧保留真实值，
+            # 断言会把「真实 app_token == 占位符」判为不匹配；
+            # 两侧同规则处理后，比对的是「脱敏后的结构」，
+            # 既保留结构一致性校验，又不会因标识符不同而误判。
             assert request.method == expected["method"], (
                 f"seq={expected['seq']} method 不匹配："
                 f"实发 {request.method} != 录制 {expected['method']}"
             )
-            assert request.url.path == expected["path"], (
+            actual_path = redact_identifiers(request.url.path)
+            assert actual_path == expected["path"], (
                 f"seq={expected['seq']} path 不匹配："
-                f"实发 {request.url.path} != 录制 {expected['path']}"
+                f"实发 {actual_path} != 录制 {expected['path']}"
             )
 
             # 记录实发请求体（供测试断言「文本字段是不是纯字符串」）

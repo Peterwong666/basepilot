@@ -6,9 +6,12 @@
 3. 「为什么没 AI」的立场段必须存在 —— top 环节全是 A 象限时，
    不解释就会被误读成「能力不足」，解释后才成为方法论证据
 4. 表映射忠实：每个覆盖环节都锚定到真实建好的数据表（或如实标「待建」）
+5. 交付物不含真实 table_id（租户身份标识不进公开文档）
 """
 
 from __future__ import annotations
+
+import re
 
 from basepilot.diagnosis import Quadrant, diagnose_all
 from basepilot.scenarios_loader import load_scenarios
@@ -76,15 +79,26 @@ def test_blueprint_table_mapping_is_faithful() -> None:
     for name in SCENARIO_TABLE_MAP:
         assert name in known_names, f"SCENARIO_TABLE_MAP 引用了不存在的场景：{name}"
 
-    # top 环节若命中映射，表名与 table_id 都要落到蓝图里
+    # top 环节若命中映射，表名要落到蓝图里
+    # 注：蓝图刻意不写 table_id（租户标识，不进公开交付物）
     for d in top:
-        tbl_name, tbl_id, _ = SCENARIO_TABLE_MAP.get(d.scenario.name, ("（待建）", "—", []))
+        tbl_name, _ = SCENARIO_TABLE_MAP.get(d.scenario.name, ("（待建）", []))
         assert tbl_name in md
-        if tbl_id != "—":
-            assert tbl_id in md
 
 
 def test_blueprint_no_garbled_chars() -> None:
     """蓝图不得含 U+FFFD 替换字符（yaml 源乱码会传染到交付物）。"""
     md = _render_default()
     assert "�" not in md, "蓝图含乱码字符 —— 检查 scenarios.yaml 的编码"
+
+
+def test_blueprint_contains_no_real_table_id() -> None:
+    """交付文档不得含真实 table_id —— 那是租户身份标识，且对读者无信息价值。
+
+    回归防护：早期版本的蓝图在「数据表」后附了真实 table_id，
+    使公开仓库暴露了「这个企业租户里有这么一张表」。
+    """
+    md = _render_default()
+    assert not re.search(r"\btbl[A-Za-z0-9]{12,}\b", md), (
+        "蓝图含真实 table_id —— 交付物只写表名，ID 由客户端从环境变量读"
+    )
