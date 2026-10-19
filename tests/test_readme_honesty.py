@@ -7,7 +7,7 @@
 测试数写 252 而实际已 286。**所以必须有机器门禁，而不是靠记性。**
 
 锁三个行为：
-1. README 声明的测试数与实际收集数一致
+1. README 声明的测试数与实际收集总数一致（含本门禁自身），且注明口径
 2. README 的「当前进度」表里不出现「建设中」「TODO」「进行中」等未完成表述
 3. 声明的错误码条数与 errors.py 实际规则数一致
 """
@@ -52,27 +52,40 @@ def _collect_per_file() -> dict[str, int]:
 
 
 def test_readme_declared_test_count_matches_reality() -> None:
-    """README 承诺的测试数必须等于实际收集数。
+    """README 承诺的测试数必须等于实际收集总数，且口径说明也与实况一致。
 
-    **计数排除本门禁文件自身**：否则这是个自指问题——门禁新增测试会让
-    它要校验的数字变化。排除后「项目测试总数」是稳定量，
-    加门禁本身不会引发假失败。
+    **口径：含本门禁自身**。读者跑 `make verify` 看到的总数就是收集总数，
+    README 写「排除门禁后的数字」会与实际输出对不上（本项目真实发生过
+    297 vs 300 的漂移）。声明总数 + 注明「含门禁脚本自身 N 个测试」
+    对两边都诚实。代价：本门禁增删测试时需同步 README 的总数与口径说明，
+    不同步则本测试失败并提示 —— 这正是门禁存在的意义。
     """
     md = _readme()
-    m = re.search(r"离线全绿（\*{0,2}(\d+)\s*tests?\*{0,2}）", md)
+    m = re.search(r"离线全绿（\*{0,2}(\d+)\s*tests?\*{0,2}[^）]*）", md)
     assert m, (
         "README「当前进度」段必须声明测试数"
-        "（格式：`离线全绿（N tests）`或 `离线全绿（**N tests**）`）"
+        "（格式：`离线全绿（N tests，含门禁脚本自身 3 个测试）`，数字可加粗）"
     )
 
     declared = int(m.group(1))
 
     per_file = _collect_per_file()
-    actual = sum(per_file.values()) - per_file.get("tests/test_readme_honesty.py", 0)
+    actual = sum(per_file.values())
 
     assert declared == actual, (
-        f"README 声明 {declared} tests，项目实际（不含本门禁自身）{actual} 个 —— "
+        f"README 声明 {declared} tests，实际收集（含门禁自身）{actual} 个 —— "
         "请同步更新 README（这是最容易发生的文档失信）"
+    )
+
+    note = re.search(r"含门禁脚本自身\s*(\d+)\s*个测试", m.group(0))
+    assert note, (
+        "声明测试数时必须注明口径（如「含门禁脚本自身 3 个测试」），"
+        "否则读者跑 pytest 看到的总数会与 README 对不上"
+    )
+    gate_count = per_file.get("tests/test_readme_honesty.py", 0)
+    assert int(note.group(1)) == gate_count, (
+        f"口径说明写「门禁自身 {note.group(1)} 个测试」，"
+        f"本门禁实际 {gate_count} 个 —— 请同步口径说明"
     )
 
 
