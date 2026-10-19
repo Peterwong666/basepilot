@@ -28,7 +28,7 @@
 | 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
 | 交付文档（playbook/training/troubleshooting/weekly_ops） | ✅ 已完成，排障 SOP 由代码生成 |
 
-**实测验证**：`make verify` 离线全绿（252 tests）；`make live-smoke APP=.. TBL=..`
+**实测验证**：`make verify` 离线全绿（286 tests）；`make live-smoke APP=.. TBL=..`
 连真实飞书跑通鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等
 （第一次全新增，第二次全更新无重复）。
 
