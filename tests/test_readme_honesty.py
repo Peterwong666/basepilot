@@ -56,8 +56,11 @@ def test_readme_declared_test_count_matches_reality() -> None:
     加门禁本身不会引发假失败。
     """
     md = _readme()
-    m = re.search(r"离线全绿（(\d+) tests?）", md)
-    assert m, "README「实测验证」段必须声明测试数（格式：`离线全绿（N tests）`）"
+    m = re.search(r"离线全绿（\*{0,2}(\d+)\s*tests?\*{0,2}）", md)
+    assert m, (
+        "README「当前进度」段必须声明测试数"
+        "（格式：`离线全绿（N tests）`或 `离线全绿（**N tests**）`）"
+    )
 
     declared = int(m.group(1))
 
@@ -73,11 +76,12 @@ def test_readme_declared_test_count_matches_reality() -> None:
 
 
 def test_readme_progress_table_has_no_unfinished_wording() -> None:
-    """「当前进度」表不得出现未完成表述（代码完成≠文案还在建设）。"""
+    """「当前进度」段不得出现未完成表述（代码完成 ≠ 文案还在建设）。"""
     md = _readme()
-    start = md.find("## ✅ 当前进度")
-    assert start > 0, "README 缺少「当前进度」段"
-    section = md[start : md.find("\n---", start)]
+    # 标题可能带装饰（如「## ✅ 当前进度」），用宽松匹配定位
+    m = re.search(r"^##\s*(?:[^\w\n]{0,4})*\s*当前进度", md, re.M)
+    assert m, "README 缺少「当前进度」段"
+    section = md[m.start() : md.find("\n---", m.start())]
 
     for word in ("建设中", "进行中", "TODO", "待完成", "暂未"):
         assert word not in section, (

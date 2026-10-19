@@ -4,41 +4,16 @@
 > Claude Code / Cursor 可**安全读写**的业务台账。
 
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/license-MIT-green.svg)](LICENSE)
+
+**[English](#english-readme) · 简体中文**
 
 ---
 
-## ✅ 当前进度
+## 这是什么
 
-**全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
-（`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-
-| 模块 | 状态 |
-|---|---|
-| 飞书约束常量（`config.py`） | ✅ 已完成，每个数值标注官方出处 |
-| token 缓存（`auth.py`） | ✅ 已完成，100 请求换 1 次 token 已实测断言 |
-| 错误码处置（`errors.py`） | ✅ 已完成，**34 条规则**，含客户现场指引 |
-| 接口分桶限流（`ratelimit.py`） | ✅ 已完成 |
-| 字段编码适配（`coerce.py`） | ✅ 已完成，13 类编码器 + `normalize_key` 解码 |
-| 客户端与并发控制（`client.py` / `serialization.py`） | ✅ 已完成，200 压测单表并发=1 |
-| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio 可跑） |
-| 业务诊断打分器（`diagnosis.py`） | ✅ 已完成，15 场景四象限 |
-| cassette 录制/重放（`cassette.py`） | ✅ 已完成，真实交互 CI 可重放 |
-| 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
-| 交付文档（playbook/training/troubleshooting/weekly_ops） | ✅ 已完成，排障 SOP 由代码生成 |
-
-**实测验证**：`make verify` 离线全绿（292 tests）；`make live-smoke APP=.. TBL=..`
-连真实飞书跑通鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等
-（第一次全新增，第二次全更新无重复）。
-
-判断进度的方式：`uv run basepilot-mcp doctor`（如实列出已实现项）。
-
----
-
-## 这个项目解决什么问题
-
-**场景**：中小企业已经在用飞书多维表格承载业务台账（库存、广告、差评跟进），
+中小企业已经在用飞书多维表格承载业务台账（库存、广告、差评跟进），
 数据靠人工从 Seller Central / 广告后台导 CSV 再粘贴进去，每天 1-2 小时。
 公司想上 AI，但第一件事就卡住了：
 
@@ -47,20 +22,62 @@
 | AI 给人员字段传了字符串 | `1254066` UserFieldConvFail | 必须是 `[{"id": "ou_xxx"}]` 数组对象 |
 | AI 给日期字段传了秒级时间戳 | `1254064` DatetimeFieldConvFail | 必须是 **13 位毫秒**，差 1000 倍 |
 | AI 给单选字段传了数组 | `1254062` SingleSelectFieldConvFail | 必须是**字符串**，不是数组 |
-| AI 写得稍快一点 | `1254291` Write conflict | **同一数据表不支持并发写**，官方建议加 0.5-1 秒延迟 |
+| AI 写得稍快一点 | `1254291` Write conflict | **同一数据表不支持并发写**，官方建议加 0.5-1秒延迟 |
 
 **这不是技术选型问题，是没有人把多维表格的真实约束包一层。**
-业务等不了，AI 落地就停在这里 —— 这是很多"客户买过 AI 工具但没用起来"的真实原因。
+业务等不了，AI 落地就停在这里 —— 这是很多「客户买过 AI 工具但没用起来」的真实原因。
 
 BasePilot 就是那一层。
 
 ---
 
+## 看图说话（全部为真实运行输出，非手绘）
+
+### 1. 入口宽容，出口严格—— 适配层把 LLM 的错误输入吃掉
+
+`scripts/demo_coerce.py` 把LLM 最常犯的四种错误喂给适配层，看它们被自动纠正：
+
+![coerce 演示](docs/images/08-coerce.png)
+
+### 2. 业务诊断：15 个环节逐条打分，明确劝退 2 个
+
+![诊断报告](docs/images/01-diagnose.png)
+
+四象限分布（7 个不需要 AI，4 个 AI 主导，2 个明确劝退）：
+
+![四象限](docs/images/02-quadrant.png)
+
+### 3. 评测：9 项指标全部实算，无一手写
+
+![评测指标](docs/images/03-eval.png)
+
+### 4. 离线全量门禁：lint + 类型 + 测试 + 评测 + 文档校验
+
+![verify](docs/images/07-verify.png)
+
+### 5. cassette 重放：真实租户交互在 CI 可复现（已脱敏）
+
+![cassette 重放](docs/images/04-cassette.png)
+
+### 6. 交付文档链：五份「报告即代码」自动生成
+
+![交付手册](docs/images/05-handbook.png)
+
+排障 SOP由 `errors.py` 自动生成，与代码零漂移：
+
+![排障 SOP](docs/images/06-troubleshooting.png)
+
+> 全部截图由 `scripts/make_screenshots.py` 执行真实命令后渲染，不存在手绘图。
+> 脚本内置「解释器污染」防护 —— 用错Python 环境会导致场景包静默降级，
+> 生成数字错误的图，已加断言阻止出图。
+
+---
+
 ## 三个适配层（核心）
 
-不是把 API 包装成工具，而是治理飞书的真实约束。
+不是把 API 包装成工具，而是**治理飞书的真实约束**。
 
-### 1. 鉴权层 —— token 缓存✅ 已实现
+### 1. 鉴权层 —— token 缓存 ✅
 
 `tenant_access_token` 有效期 7200 秒。官方明确：**剩余有效期小于 30 分钟时返回新 token，
 大于等于 30 分钟时返回原 token**。所以刷新窗口必须落在 `[0, 30min]` 区间内，
@@ -71,7 +88,7 @@ BasePilot 就是那一层。
 **实测指标：100 次业务请求 → 向飞书换 token 1 次。**
 （`tests/test_auth.py::test_100_requests_fetch_token_once`，可复现）
 
-### 2. 并发层 —— 单表写串行 ✅ 已实现
+### 2. 并发层 —— 单表写串行 ✅
 
 官方错误码 `1254291` 的排查建议原文：「在接口与接口之间增加 **0.5 或 1 秒**的延迟」；
 `1254607` 补充说明底层「基于版本维度的串行方式，**不支持并发**」。
@@ -82,7 +99,7 @@ BasePilot 就是那一层。
 **实测指标：200 次压测下，单表最大并发写 = 1，`1254291` 计数 = 0。**
 （`tests/test_client.py::test_same_table_writes_are_serialized`，可复现）
 
-### 3. 类型层 —— 字段编码适配 ✅ 已实现
+### 3. 类型层 —— 字段编码适配 ✅
 
 按 13 类字段自动编码为官方要求格式，并对**不可写字段 fail-fast**。
 另有 `normalize_key()` 解码：API 读回的文本字段是富文本数组、URL 是对象，
@@ -109,51 +126,97 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 
 ---
 
-## 交付层：给客户用的文档 ✅ 已交付
+## MCP 工具（8 个）
 
-技术做得再好，客户不会用就是零。这部分**已完成**：
-
-| 文档 | 内容 |
+| 工具 | 作用 |
 |---|---|
-| `docs/delivery/delivery_playbook.md` | 客户现场 5 步交付手册：建应用 → 授权 → 建表 → 体检 → 培训陪跑 |
-| `docs/delivery/troubleshooting.md` | 34 条错误码 → 现场动作对照表（**由 `errors.py` 自动生成，零漂移**） |
-| `docs/delivery/client_training.md` | 给业务方的一页纸，不写代码也能用 |
-| `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（促活指标/追闭环/挖场景，`make adoption` 一键出周报） |
-| **`docs/delivery/delivery_handbook.md`** | **交付手册合集页 —— 五份交付文档的入口：先读哪份 / 每份回答什么问题 / 哪些数字是算的** |
-| `docs/limitations.md` | 已知限制 + 真实失败模式（单选传数组/日期传秒级/人员传字符串/读结构≠写结构） |
+| `describe_table` | 读表结构与字段类型 |
+| `create_records` / `update_records` / `delete_records` | 增 / 改 / 删（删除默认 dry-run） |
+| `search_records` | 按条件检索 |
+| `batch_upsert` | 按唯一键幂等 upsert（自动拆 create/update） |
+| `dry_run_create` | **预演**：跑完整编码链路但零真实写请求 |
+| `diagnose_scenarios` | 业务诊断：判断哪些环节值得上 AI |
 
-**FDE 交付方法论五连**（全部「报告即代码」：数字从 `diagnosis.py`/cassette/eval 实算，改源数据重跑自动更新，测试锁结构）：
+接入 Claude Code：
 
-> 入口从 **`docs/delivery/delivery_handbook.md`** 进 —— 它串起下面五份并标注每份的数字口径。
+```json
+{
+  "mcpServers": {
+    "basepilot": {
+      "command": "basepilot-mcp",
+      "args": ["serve"],
+      "env": {
+        "BASEPILOT_APP_ID": "cli_xxx",
+        "BASEPILOT_APP_SECRET": "xxx",
+        "BASEPILOT_APP_TOKEN": "bascnxxx",
+        "BASEPILOT_TABLE_INVENTORY": "tblxxx"
+      }
+    }
+  }
+}
+```
 
-| 文档 | 回答 | 生成脚本 |
-|---|---|---|
-| `docs/delivery/discovery_report.md` | **先做哪个**（五维诊断 + 四象限 + 2 劝退） | `scripts/gen_discovery_report.py` |
-| `docs/delivery/solution_blueprint.md` | **怎么做**（top3 环节展开成可签字方案） | `scripts/gen_solution_blueprint.py` |
-| `docs/delivery/case_backtest.md` | **凭什么信你**（真实证据回测当初预测） | `scripts/gen_case_backtest.py` |
-| `docs/delivery/expansion_matrix.md` | **能复制到哪**（15 场景归纳 4 种能力模式） | `scripts/gen_expansion_matrix.py` |
-| `docs/delivery/rollout_calendar.md` | **按什么节奏铺**（4 波次先稳后难推广日历） | `scripts/gen_rollout_calendar.py` |
+---
+
+## 当前进度
+
+**全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
+（`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
+`make verify` 离线全绿（**292 tests**）；`make live-smoke` 连真实飞书跑通
+鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
+第二次全更新无重复）。
+
+| 模块 | 状态 |
+|---|---|
+| 飞书约束常量（`config.py`） | ✅ 已完成，每个数值标注官方出处 |
+| token 缓存（`auth.py`） | ✅ 已完成，100 请求换 1 次 token 已实测断言 |
+| 错误码处置（`errors.py`） | ✅ 已完成，**34 条规则**，含客户现场指引 |
+| 接口分桶限流（`ratelimit.py`） | ✅ 已完成 |
+| 字段编码适配（`coerce.py`） | ✅ 已完成，13 类编码器 + `normalize_key` 解码 |
+| 客户端与并发控制（`client.py` / `serialization.py`） | ✅ 已完成，200 压测单表并发=1 |
+| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio 可跑） |
+| 业务诊断打分器（`diagnosis.py`） | ✅ 已完成，15 场景四象限 |
+| cassette 录制/重放（`cassette.py`） | ✅ 已完成，真实交互 CI 可重放 |
+| 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
+| 交付文档（playbook/training/troubleshooting/weekly_ops） | ✅ 已完成，排障 SOP 由代码生成 |
+
+判断进度的方式：`basepilot-mcp doctor`（如实列出已实现项）。
 
 ---
 
 ## 快速开始
 
 ```bash
-# 离线全量校验（lint + 类型 + 测试 + 评测 + 文档校验，CI 也跑这个）
-make verify
+git clone https://github.com/Peterwong666/basepilot.git
+cd basepilot
+uv sync                    # 或 make setup
 
-# 实算评测指标（并发峰值/重试成功率/dry-run 一致率等，全部 MockTransport 压测得出）
-make eval
+cp .env.example .env       # 填入你的飞书应用凭证
 
-# 连真实飞书租户跑全链路（鉴权→建表→写入→读回→清理）
-make live-smoke APP=<app_token> TBL=<table_id>
-
-# 跨境三表场景包灌数（batch_upsert 幂等，可重复跑）
-python scripts/seed_cross_border.py
-
-# 促活三指标（覆盖率/SLA逾期率/采用率），出 Markdown 周报片段
-make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
+make verify                # 离线全量校验：lint + 类型 + 测试 + 评测 + 文档校验
+make eval                  # 实算评测指标（并发峰值/重试成功率/dry-run 一致率）
+make live-smoke APP=<app_token> TBL=<table_id>   # 连真实飞书跑全链路
+python scripts/seed_cross_border.py                # 跨境三表灌数（幂等，可重复）
+make adoption APP=<app> TBL=<表ID> KEY=<唯一键>    # 上线后促活三指标，出周报
 ```
+
+> 所有脚本都用项目自己的 venv 解释器。**用系统 Python 可能缺少 PyYAML 导致
+> 场景包静默降级为fallback（4 条内置场景），跑出的数字是错的** ——
+> `scripts/diagnose.py` 等已通过 `make verify` 的门禁检查，但请优先用 `make` / `uv run`。
+
+---
+
+## 安全设计
+
+- **删除护栏**：`delete_records` 默认 `dry_run=true`，须显式 `confirm=true` 才真删 ——
+  防 LLM 幻觉批量删库。
+- **不可写字段拦截**：公式 / 查找引用 / 创建时间 / 自动编号等 13 类系统字段 **fail-fast 拒绝写入**，
+  不允许静默写坏数据。
+- **凭证隔离**：`.env` 已 gitignore；cassette 里app_id / app_token / table_id /
+  record_id 全部替换为占位符（`cassette.redact_identifiers`）——
+  这些不是密钥，但会暴露租户身份。
+- **发布前门禁**：`tests/test_no_secrets_in_repo.py` 在 CI 里扫描仓库，
+  检出真实租户标识符 / 泄露的 `.env` / 本机绝对路径即失败；失败信息只报位置不回显值。
 
 ---
 
@@ -161,14 +224,11 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 
 **主动划边界比假装覆盖更可信。** 本项目**不做**：
 
-- ❌ 删除整个多维表格（Base）
-- ❌ 授予/变更权限
-- ❌ OAuth 授权流程
-- ❌ 直接发送飞书消息
-- ❌ 事件订阅（长连接）—— roadmap 里写了设计要点与本期不做的原因
-
-删除记录的工具有**双重护栏**：默认 `dry_run=true`，且须显式 `confirm=true` 才真删。
-这是防LLM 幻觉批量删库的安全设计。
+- ❌ 删除整个多维表格（Base）—— 不可逆，风险远高于收益
+- ❌ 授予/变更权限 —— 应由表owner 在界面完成
+- ❌ OAuth 授权流程 —— 定位是企业内部工具 + 开源交付包
+- ❌ 直接发送飞书消息 —— 外部可见副作用应由上层决策
+- ❌ 事件订阅（长连接）—— 需公网与连接数管理，且不解决当前核心痛点
 
 ---
 
@@ -185,10 +245,25 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 | 错误码分类处置 + 现场指引 | ✗ | ✓ |
 | 幂等键重生成 | 部分 | ✓ |
 | 离线录制回放测试 | ✗ | ✓ |
-| 业务语义工具（CSV 同步/ 风险标注 / 差评闭环） | ✗ | ✓ |
+| 业务语义工具（CSV 同步 / 风险标注 / 差评闭环） | ✗ | ✓ |
 | 客户交付手册 + 排障 SOP | ✗ | ✓ |
 
 详见 `docs/adr/005-why-not-wrap-official-lark-mcp.md`。
+
+---
+
+## FDE 交付方法论五连（报告即代码）
+
+**报告即代码**：数字从 `diagnosis.py`/cassette/eval 实算，改源数据重跑自动更新，测试锁结构。
+入口从**`docs/delivery/delivery_handbook.md`** 进 —— 它串起五份并标注每份的数字口径。
+
+| 文档 | 回答 | 生成脚本 |
+|---|---|---|
+| `docs/delivery/discovery_report.md` | **先做哪个**（五维诊断 + 四象限 + 劝退） | `scripts/gen_discovery_report.py` |
+| `docs/delivery/solution_blueprint.md` | **怎么做**（top3 环节展开成可签字方案） | `scripts/gen_solution_blueprint.py` |
+| `docs/delivery/case_backtest.md` | **凭什么信你**（真实证据回测当初预测） | `scripts/gen_case_backtest.py` |
+| `docs/delivery/expansion_matrix.md` | **能复制到哪**（15 场景归纳 4 种能力模式） | `scripts/gen_expansion_matrix.py` |
+| `docs/delivery/rollout_calendar.md` | **按什么节奏铺**（4 波次先稳后难推广日历） | `scripts/gen_rollout_calendar.py` |
 
 ---
 
@@ -196,23 +271,80 @@ make adoption APP=<app> TBL=<表ID> KEY=<唯一键> BASELINE=<基准数>
 
 | 文档 | 内容 |
 |---|---|
+| **`docs/PROJECT_RETROSPECTIVE.md`** | **项目复盘**：主要节点（问题→分析→解决）+ 结构分析，全面了解项目从这里入手 |
 | `docs/delivery/delivery_playbook.md` | 客户现场 5 步交付手册 |
+| `docs/delivery/delivery_handbook.md` | 交付手册合集页（五份方法论的入口与数字口径表） |
 | `docs/delivery/troubleshooting.md` | 错误码 → 现场动作排障 SOP（**由 `errors.py` 自动生成**） |
 | `docs/delivery/client_training.md` | 客户培训手册（给业务方的一页纸） |
-| `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（`make adoption` 一键出促活周报） |
-| **`docs/delivery/delivery_handbook.md`** | **交付手册合集页（五份方法论文档的入口与数字口径表）** |
-| `docs/delivery/discovery_report.md` | FDE 方法论①先做哪个（诊断报告，报告即代码） |
-| `docs/delivery/solution_blueprint.md` | FDE 方法论②怎么做（方案蓝图） |
-| `docs/delivery/case_backtest.md` | FDE 方法论③凭什么信你（案例回测） |
-| `docs/delivery/expansion_matrix.md` | FDE 方法论④能复制到哪（可复制矩阵） |
-| `docs/delivery/rollout_calendar.md` | FDE 方法论⑤按什么节奏铺（推广日历） |
+| `docs/delivery/weekly_ops.md` | 上线后 8 周运营手册（`make adoption` 出促活周报） |
 | `docs/limitations.md` | 已知限制与 badcase（含真实失败模式） |
-| `docs/adr/` | 架构决策记录（含 006「读结构≠写结构」——cassette 实证） |
-| `tests/cassettes/` | 真实租户交互录制（脱敏），`test_cassette_replay.py` CI 重放 |
-| `docs/PROJECT_RETROSPECTIVE.md` | **项目复盘及学习文档**：主要节点（问题→分析→解决）+ 结构分析，全面了解项目从这里入手 |
+| `docs/adr/` | 架构决策记录（含 006「读结构≠写结构」—— cassette 实证） |
+| `tests/cassettes/` | 真实租户交互录制（脱敏），CI 可重放 |
 
 ---
 
-## 许可
+## 开发
+
+```bash
+make verify    # 一条命令跑全部门禁（lint + mypy strict + pytest + eval + docs-check）
+make docs      # 重新生成全部交付文档
+```
+
+技术栈：Python 3.11+ · httpx（裸客户端，不依赖官方 SDK）· FastMCP（工具层）·
+PyYAML（场景包）· pytest + respx（离线回放）· ruff + mypy strict。
+
+---
+
+## License
 
 MIT
+
+---
+
+<a name="english-readme"></a>
+
+## English
+
+**BasePilot** is a **Feishu (Lark) Base MCP Server** for enterprise delivery — it turns
+multi-dimensional tables (Base) into business ledgers that Claude Code / Cursor can **safely
+read and write**.
+
+### Why
+
+Companies already keep inventory / ads / review tracking in Feishu Base. The moment they want
+AI involved, they hit these wallss:
+
+| Blocker | Feishu error | Root cause |
+|---|---|---|
+| AI passes a string to a user field | `1254066` | must be `[{"id": "ou_xxx"}]` |
+| AI passes a second-level timestamp | `1254064` | must be **13-digit ms** |
+| AI passes an array to a single-select | `1254062` | must be a **string** |
+| AI writes slightly too fast | `1254291` | a table does **not support concurrent writes** |
+
+This isn't a technology-selection problem — nobody wrapped Base's real constraints in a layer.
+AI adoption stalls here. BasePilot is that layer.
+
+### Three adaptation layers
+
+1. **Auth** — token cache with single-flight lock. Measured: 100 business requests → 1 token refresh.
+2. **Concurrency** — per-`table_id` lock + 0.5s throttle, so `1254291` is avoided *proactively*.
+3. **Types** — 13 field encoders, "lenient in, strict out". Refuses writes to computed/system fields.
+
+### 8 MCP tools
+
+`describe_table`, `create_records`, `update_records`, `delete_records` (dry-run by default),
+`search_records`, `batch_upsert` (idempotent), `dry_run_create` (zero real writes),
+`diagnose_scenarios` (which business steps deserve AI).
+
+### Verification
+
+`make verify` runs lint + mypy strict + tests + eval + doc-link checks.
+All 9 eval metrics are **computed from real code**, never hand-written.
+
+### Docs
+
+Delivery methodology and architecture decisions live in `docs/`. Start with
+`docs/PROJECT_RETROSPECTIVE.md`. All delivery docs are "reports as code" — numbers come from
+real computation.
+
+MIT licensed.
