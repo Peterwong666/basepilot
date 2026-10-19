@@ -35,13 +35,23 @@ _FORBIDDEN_PATTERNS: tuple[tuple[str, str], ...] = (
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".mypy_cache",
               ".ruff_cache", ".pytest_cache"}
 
+#: 本文件自身不扫描 —— 它是**规则定义处**，里面必然写着命中形态的示例
+#: （如 `tbl` + 12 位以上的示例串）。规则文件不是数据文件。
+_SELF = Path(__file__).resolve()
+
 
 def _tracked_files() -> list[Path]:
-    """只扫 git 实际追踪的文件 —— 未追踪的不可能出现在公开仓库里。"""
+    """扫**将要进入仓库**的所有文件：已追踪 + 未追踪未忽略。
+
+    **为什么不只扫 `git ls-files`**：只扫已追踪文件时，新增的未追踪文件
+    （写完还没 `git add`）会完全绕过门禁 —— 而那正是最可能带密钥的阶段。
+    所以补上 `--others --exclude-standard`（未追踪且未被 .gitignore 忽略）。
+    已 gitignore 的（.env /缓存）本来就不可能出现在公开仓库里，不扫。
+    """
     import subprocess
 
     out = subprocess.run(
-        ["/usr/bin/git", "ls-files"],
+        ["/usr/bin/git", "ls-files", "--cached", "--others", "--exclude-standard"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -52,11 +62,18 @@ def _tracked_files() -> list[Path]:
 
 
 def test_no_real_tenant_identifiers_in_repo() -> None:
-    """仓库内任何被追踪文件都不得含真实租户标识符。"""
+    """仓库内任何文件都不得含真实租户标识符。
+
+    **失败信息只报位置与类型，不报匹配到的实际值** ——
+    否则 CI 日志、测试输出、乃至截图里就会出现真实的 app_token，
+    门禁本身反而成了泄露渠道（这个坑踩过：assert 里直接插值了匹配串）。
+    """
     hits: list[str] = []
     for path in _tracked_files():
         if any(part in _SKIP_DIRS for part in path.parts):
             continue
+        if path.resolve() == _SELF:
+            continue  # 规则定义处自身跳过
         if not path.exists() or path.suffix in {".png", ".jpg", ".pdf", ".whl"}:
             continue
         try:
@@ -64,10 +81,16 @@ def test_no_real_tenant_identifiers_in_repo() -> None:
         except (UnicodeDecodeError, OSError):
             continue  # 二进制文件，凭证不会以文本形式存在于其中
         for pattern, label in _FORBIDDEN_PATTERNS:
-            for m in re.finditer(pattern, text):
-                hits.append(f"{path.relative_to(ROOT)}: {label} = {m.group(0)}")
+            n = len(re.findall(pattern, text))
+            if n:
+                rel = path.relative_to(ROOT)
+                hits.append(f"{rel}: 检出 {label} × {n}（值不回显，避免日志泄露）")
 
-    assert not hits, "仓库内检出真实租户标识符：\n" + "\n".join(hits[:20])
+    assert not hits, (
+        "仓库内检出疑似真实租户标识符（值已隐去）：\n"
+        + "\n".join(hits[:20])
+        + "\n处理：把真实值改为占位符或移到 .env（见 .env.example）"
+    )
 
 
 def test_cassette_identifiers_all_redacted() -> None:
@@ -155,7 +178,8 @@ def test_no_local_absolute_paths_in_docs() -> None:
                 text = p.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 continue
-            for m in suspicious.finditer(text):
-                hits.append(f"{p.relative_to(ROOT)}: {m.group(0)}")
+            n = len(suspicious.findall(text))
+            if n:
+                hits.append(f"{p.relative_to(ROOT)}: 本机绝对路径 × {n}")
 
     assert not hits, "检出本机绝对路径：\n" + "\n".join(hits[:20])

@@ -419,7 +419,11 @@ def render_quadrant_mermaid(results: list[Diagnosis]) -> str:
     def add(q: Quadrant, axis: str, max_score: float) -> None:
         for d in buckets[q]:
             label = f"{d.scenario.name} {d.score:.0f}"
-            lines.append(f"    {axis} {min(d.score, max_score)}: {label}")
+            # 坐标值去掉浮点尾噪：82.4 而不是 82.40000000000001。
+            # 直接写 repr 会把 IEEE754 的二进制误差暴露给读者，
+            # 而这是交付物里最容易被截图传播出去的「不专业细节」。
+            coord = round(min(d.score, max_score), 1)
+            lines.append(f"    {axis} {coord:g}: {label}")
 
     add(Quadrant.A_AUTO, "A 直接自动化", 100)
     add(Quadrant.B_ASSISTED, "B AI辅助", 100)

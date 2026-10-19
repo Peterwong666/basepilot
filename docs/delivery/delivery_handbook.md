@@ -69,7 +69,7 @@
 ### 2. 方案蓝图：把排名靠前的环节做成什么样
 
 - **回答**：怎么做　|　**给谁看**：客户业务 + 技术双方（可签字）
-- **摘要行**：生成日期：2026-10-18　|　覆盖环节：**3 个**　|　合计年省：**849 小时**　|　前置：`docs/delivery/discovery_report.md`
+- **摘要行**：生成日期：2026-10-19　|　覆盖环节：**3 个**　|　合计年省：**849 小时**　|　前置：`docs/delivery/discovery_report.md`
 - **生成脚本**：`scripts/gen_solution_blueprint.py`
 - **本文档**：[`solution_blueprint.md`](solution_blueprint.md)
 
