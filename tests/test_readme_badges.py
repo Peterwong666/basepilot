@@ -8,11 +8,17 @@
 （`img.shields.io/python-...` 与 `img.shields.io/license-...`），
 GitHub 的图片代理（camo）不跟随其301 重定向，于是显示 404。
 
-锁四个行为：
-1. 所有徽章必须走标准 `/badge/` 路径（非标准短路径会被 camo 判失败）
+锁五个行为：
+1. 所有静态徽章必须走标准 `/badge/` 路径（非标准短路径会被 camo 判失败）
 2. 徽章 URL 必须含 `/badge/` 且格式合法
 3. 徽章 alt 文本非空（alt 坏掉屏幕阅读器读不出来）
 4. 本地文件链接（如 `](LICENSE)`）指向的文件必须真实存在
+5. endpoint 徽章（tests 数 / eval 指标）指向的仓库内 JSON 必须真实存在
+
+例外：`https://img.shields.io/endpoint?url=...` 动态徽章内容由
+`scripts/gen_badges.py` 从权威来源实算生成（pytest 收集数 / eval 报告），
+不走 `/badge/` 静态路径、也没有图片扩展名，规则 1/2 对它豁免，
+改由规则 5 防止指向不存在的 JSON（否则 shields.io 抓 404）。
 """
 
 from __future__ import annotations
@@ -32,6 +38,12 @@ _IMAGE_HOSTS = {
     "github.com",
     "raw.githubusercontent.com",
 }
+
+#: shields.io endpoint 动态徽章前缀 —— 内容指向仓库内 JSON，豁免 /badge/ 与扩展名检查
+_ENDPOINT_PREFIX = "https://img.shields.io/endpoint?url="
+
+#: endpoint 徽章只允许指向本仓库 main 分支的 raw 文件（合入后 shields.io 才能抓到）
+_ENDPOINT_TARGET_PREFIX = "https://raw.githubusercontent.com/Peterwong666/basepilot/main/"
 
 
 def _badges() -> list[tuple[int, str, str, str]]:
@@ -55,7 +67,7 @@ def test_badges_use_standard_shields_path() -> None:
     """
     offenders: list[str] = []
     for line_no, alt, url, _ in _badges():
-        if "shields.io" not in url:
+        if "shields.io" not in url or url.startswith(_ENDPOINT_PREFIX):
             continue
         if "/badge/" not in url:
             offenders.append(f"第 {line_no} 行 [{alt}]: {url}")
@@ -76,6 +88,8 @@ def test_badge_urls_are_wellformed() -> None:
         host = url.split("//", 1)[1].split("/", 1)[0]
         if host not in _IMAGE_HOSTS:
             bad.append(f"第 {line_no} 行 [{alt}]: 未知图床 {host}")
+            continue
+        if url.startswith(_ENDPOINT_PREFIX):
             continue
         if not url.endswith((".svg", ".png", ".jpg", ".jpeg", ".gif")):
             bad.append(f"第 {line_no} 行 [{alt}]: 图片缺扩展名 -> {url}")
@@ -111,3 +125,24 @@ def test_readme_has_no_leftover_short_badge_paths() -> None:
         "img.shields.io/badge/python-3.11+",
     ):
         assert bad not in text, f"README 仍含非标准/未编码徽章路径：{bad}"
+
+
+def test_endpoint_badges_point_to_committed_json() -> None:
+    """endpoint 徽章指向的仓库内 JSON 必须真实存在且已提交。
+
+    shields.io 按 endpoint URL 去抓 raw JSON，文件缺失首屏就是
+    `404 badge not found`。文件由 `make badges`（scripts/gen_badges.py）
+    实算生成，内容零漂移由 `make docs-check` 里的 `--check` 门禁负责。
+    """
+    bad: list[str] = []
+    for line_no, alt, url, _ in _badges():
+        if not url.startswith(_ENDPOINT_PREFIX):
+            continue
+        target = url[len(_ENDPOINT_PREFIX) :]
+        if not target.startswith(_ENDPOINT_TARGET_PREFIX):
+            bad.append(f"第 {line_no} 行 [{alt}]: endpoint 未指向本仓库 main 分支 -> {target}")
+            continue
+        local = ROOT / target[len(_ENDPOINT_TARGET_PREFIX) :]
+        if not local.exists():
+            bad.append(f"第 {line_no} 行 [{alt}]: 本地缺文件 {local.relative_to(ROOT)}")
+    assert not bad, "endpoint 徽章指向的 JSON 校验失败：\n" + "\n".join(bad)

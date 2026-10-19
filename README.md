@@ -6,6 +6,8 @@
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/tests.json)](.github/badges/tests.json)
+[![eval](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/eval.json)](eval/reports/eval_report.json)
 
 **[English](#english-readme) · 简体中文**
 
@@ -216,7 +218,7 @@ basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
 
 **全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
 （`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-`make verify` 离线全绿（**308 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
+`make verify` 离线全绿（**309 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
 鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
 第二次全更新无重复）。
 
