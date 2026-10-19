@@ -29,13 +29,16 @@ def _readme() -> str:
 def _collect_per_file() -> dict[str, int]:
     """收集测试用例，返回 {相对路径: 用例数}。
 
-    本项目 pytest 版本的 `--collect-only -q` 输出是逐文件格式
-    （`tests/x.py: 5`），故按文件求和，不依赖汇总行格式。
+    **用 `sys.executable` 而非硬编码 `.venv/bin/python`**：
+    干净 clone（如 CI）里没有 .venv，硬编码会 FileNotFoundError。
+    门禁自己不该依赖「本机恰好有这个路径」—— 这类环境假设会让门禁
+    在 CI 里假失败（已踩过一次）。
     """
     import subprocess
+    import sys
 
     out = subprocess.run(
-        [".venv/bin/python", "-m", "pytest", "--collect-only", "-q"],
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
         cwd=ROOT,
         capture_output=True,
         text=True,
