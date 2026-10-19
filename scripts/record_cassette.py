@@ -34,8 +34,7 @@ from basepilot.cassette import RecordingTransport  # noqa: E402
 from basepilot.client import BitableClient  # noqa: E402
 
 CASSETTE = (
-    Path(__file__).resolve().parent.parent
-    / "tests" / "cassettes" / "cross_border_upsert.jsonl"
+    Path(__file__).resolve().parent.parent / "tests" / "cassettes" / "cross_border_upsert.jsonl"
 )
 #: 真实 app_token / table_id 从环境变量读，不写死在本仓库里
 #: （录制需要真实值，但真实值不该进版本库 —— 见 tests/test_no_secrets_in_repo.py）
@@ -71,9 +70,7 @@ async def main() -> int:
 
     # 包一层录制 transport（沿用 BitableClient 默认 30s 超时，避免连接抖动）
     inner = httpx.AsyncHTTPTransport(retries=2)
-    recording = RecordingTransport(
-        inner, CASSETTE, secrets={app_secret}
-    )
+    recording = RecordingTransport(inner, CASSETTE, secrets={app_secret})
     http = httpx.AsyncClient(
         transport=recording,
         base_url="https://open.feishu.cn/open-apis",
@@ -88,7 +85,8 @@ async def main() -> int:
 
         # 3. 先 upsert 一条探测记录（create 分支）
         r1 = await client.upsert_records(
-            APP, TABLE,
+            APP,
+            TABLE,
             [{"SKU": PROBE_SKU, "FBA库存": 1, "库存健康": "正常"}],
             "SKU",
         )
@@ -96,10 +94,11 @@ async def main() -> int:
 
         # 4. 再 upsert 同一条（update 分支，验证幂等）+ 一条已存在的真实 SKU
         r2 = await client.upsert_records(
-            APP, TABLE,
+            APP,
+            TABLE,
             [
                 {"SKU": PROBE_SKU, "FBA库存": 2, "库存健康": "正常"},  # 已存在→update
-                {"SKU": "PET-BOWL-001", "FBA库存": 95},                # 种子数据已存在→update
+                {"SKU": "PET-BOWL-001", "FBA库存": 95},  # 种子数据已存在→update
             ],
             "SKU",
         )
@@ -108,9 +107,12 @@ async def main() -> int:
         # 5. search 验证 + 找到 probe 的 record_id 用于清理
         items = await client.search_records(APP, TABLE, field_names=["SKU", "FBA库存"])
         probe = next(
-            (i for i in items
-             if (i.get("fields") or {}).get("SKU", [{}])[0].get("text") == PROBE_SKU
-             if isinstance((i.get("fields") or {}).get("SKU"), list)),
+            (
+                i
+                for i in items
+                if (i.get("fields") or {}).get("SKU", [{}])[0].get("text") == PROBE_SKU
+                if isinstance((i.get("fields") or {}).get("SKU"), list)
+            ),
             None,
         )
         print(f"4. search 读回 {len(items)} 条，probe={'找到' if probe else '未找到'}")

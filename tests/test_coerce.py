@@ -249,9 +249,7 @@ def test_attachment_string_token() -> None:
 
 
 def test_attachment_dict() -> None:
-    assert coerce_value("附件", 17, {"file_token": "tok_abc"}) == [
-        {"file_token": "tok_abc"}
-    ]
+    assert coerce_value("附件", 17, {"file_token": "tok_abc"}) == [{"file_token": "tok_abc"}]
 
 
 def test_attachment_list() -> None:

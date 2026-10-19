@@ -96,10 +96,7 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_serve()
 
     parser.print_help()
-    print(
-        "\n提示：启动 MCP Server 用 `basepilot-mcp serve`"
-        "（需先配置 BASEPILOT_APP_ID/SECRET）。"
-    )
+    print("\n提示：启动 MCP Server 用 `basepilot-mcp serve`（需先配置 BASEPILOT_APP_ID/SECRET）。")
     return 0
 
 

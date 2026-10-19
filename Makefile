@@ -1,4 +1,4 @@
-.PHONY: help verify lint fmt typecheck test eval live-smoke clean evidence docs docs-check troubleshoot diagnose adoption
+.PHONY: help verify lint format-check fmt typecheck test eval live-smoke clean evidence docs docs-check troubleshoot diagnose adoption
 
 # 直接用 .venv 里的二进制，不走 `uv run`：
 #  1. mypy 2.x 直接 spawn 会失败，`python -m` 更稳
@@ -11,10 +11,10 @@ RUFF_ENV := RUFF_CACHE_DIR=/tmp/ruff_cache_basepilot
 
 help:
 	@echo "BasePilot —— 可用命令"
-	@echo "  make verify      离线全量校验（lint + 类型 + 测试 + 评测 + 文档），CI 跑这个"
+	@echo "  make verify      离线全量校验（lint + 格式 + 类型 + 测试 + 评测 + 文档），CI 跑这个"
 	@echo "  make diagnose    生成业务诊断报告（四象限 + 劝退结论）"
-	@echo "  make lint        ruff 静态检查"
-	@echo "  make fmt         ruff 自动修复"
+	@echo "  make lint        ruff 静态检查 + 格式检查"
+	@echo "  make fmt         ruff 自动修复 + 格式化"
 	@echo "  make typecheck   mypy strict"
 	@echo "  make test        pytest（全离线）"
 	@echo "  make eval        评测：指标由代码实算，未实现项标 pending"
@@ -26,9 +26,13 @@ help:
 	@echo "  make live-smoke  连真实飞书租户跑全链路（D5 之后可用）"
 	@echo "  make setup       安装依赖（首次或改动 pyproject 后）"
 
-verify: lint typecheck test eval docs-check
+# 注意：`verify` 必须包含 `format-check`。
+#踩过的坑：原本 verify 只跑 `ruff check`，本地全绿，
+# 但 CI 里`ruff format --check` 红了 —— 本地漏检。
+# 「本地能过」不等于「CI 能过」，门禁要跟CI 逐条对齐。
+verify: lint format-check typecheck test eval docs-check
 	@echo ""
-	@echo "✅ verify 通过：lint + 类型 + 测试 + 评测 + 文档校验 全部绿"
+	@echo "✅ verify 通过：lint + 格式 + 类型 + 测试 + 评测 + 文档校验 全部绿"
 
 setup:
 	uv sync --all-extras --dev
@@ -38,6 +42,10 @@ diagnose:
 
 lint:
 	@$(RUFF_ENV) $(RUFF) check src tests eval scripts
+
+# 与 CI 的 `ruff format --check` 逐条对齐（缺了它本地会假绿）
+format-check:
+	@$(RUFF_ENV) $(RUFF) format --check src tests eval scripts
 
 fmt:
 	@$(RUFF_ENV) $(RUFF) check --fix src tests eval scripts

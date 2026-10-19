@@ -183,8 +183,7 @@ def render(results: list) -> str:
     lines.append("|---|---|---|---|---|")
     for d in DOCS:
         lines.append(
-            f"| {d.step} | [{d.title}]({d.id}.md) | **{d.answers}** "
-            f"| {d.audience} | {d.basis} |"
+            f"| {d.step} | [{d.title}]({d.id}.md) | **{d.answers}** | {d.audience} | {d.basis} |"
         )
     lines.append("")
 
@@ -211,8 +210,7 @@ def render(results: list) -> str:
     lines.append("## 哪些数字是算出来的，哪些不是")
     lines.append("")
     lines.append(
-        "这是整份手册最该被先读懂的一节 —— "
-        "**任何咨询交付都该经得起「你这个数哪来的」这一问。**"
+        "这是整份手册最该被先读懂的一节 —— **任何咨询交付都该经得起「你这个数哪来的」这一问。**"
     )
     lines.append("")
     lines.append("| 数字 | 来源 | 性质 |")
@@ -226,22 +224,14 @@ def render(results: list) -> str:
         "diagnosis 的 `annual_hours_saved` 求和 | 🟢 实算 |"
     )
     lines.append(
-        "| 字段编码正确率 / 重试成功率 / 单表最大并发 | "
-        "`make eval` 压测与故障注入 | 🟢 实算 |"
+        "| 字段编码正确率 / 重试成功率 / 单表最大并发 | `make eval` 压测与故障注入 | 🟢 实算 |"
     )
-    lines.append(
-        "| 飞书真实交互证据 | cassette 录制的真实租户请求 | 🟢 实测 |"
-    )
-    lines.append(
-        "| 「可复制到」的业务域 | 从已验证场景抽象的定性判断 | 🟡 定性 |"
-    )
-    lines.append(
-        "| 推广时间轴（T0 / 1-2 月 / 2-3 月 / 3-6 月） | 先稳后难的排期决策 | 🟡 规划 |"
-    )
+    lines.append("| 飞书真实交互证据 | cassette 录制的真实租户请求 | 🟢 实测 |")
+    lines.append("| 「可复制到」的业务域 | 从已验证场景抽象的定性判断 | 🟡 定性 |")
+    lines.append("| 推广时间轴（T0 / 1-2 月 / 2-3 月 / 3-6 月） | 先稳后难的排期决策 | 🟡 规划 |")
     lines.append("")
     lines.append(
-        "**实算的会随场景包改动自动重算，定性的明确标注。** "
-        "没有任何一个数字是手写进文档的。"
+        "**实算的会随场景包改动自动重算，定性的明确标注。** 没有任何一个数字是手写进文档的。"
     )
     lines.append("")
 
@@ -266,9 +256,7 @@ def render(results: list) -> str:
     lines.append("")
     lines.append("## 这套方法不承诺什么")
     lines.append("")
-    lines.append(
-        "交付材料说清楚边界，比堆成功案例更能建立信任。这套打法有四条明确的局限："
-    )
+    lines.append("交付材料说清楚边界，比堆成功案例更能建立信任。这套打法有四条明确的局限：")
     lines.append("")
     lines.append(
         f"- **有 {rejected_count} 个环节明确不做**：数据在别人系统里、"
@@ -284,13 +272,10 @@ def render(results: list) -> str:
         "这套模式直接退回「诚实劝退」，不硬凑 AI"
     )
     lines.append(
-        "- **时间轴是规划不是承诺**：波次顺序是先稳后难的决策，"
-        "实际排期取决于客户侧数据就位速度"
+        "- **时间轴是规划不是承诺**：波次顺序是先稳后难的决策，实际排期取决于客户侧数据就位速度"
     )
     lines.append("")
-    lines.append(
-        "更完整的局限清单见 [`limitations.md`](../limitations.md)。"
-    )
+    lines.append("更完整的局限清单见 [`limitations.md`](../limitations.md)。")
     lines.append("")
 
     # ---- 怎么重新生成 ----

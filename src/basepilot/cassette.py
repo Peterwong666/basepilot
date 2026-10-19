@@ -172,8 +172,7 @@ class ReplayTransport(httpx.MockTransport):
             )
             actual_path = redact_identifiers(request.url.path)
             assert actual_path == expected["path"], (
-                f"seq={expected['seq']} path 不匹配："
-                f"实发 {actual_path} != 录制 {expected['path']}"
+                f"seq={expected['seq']} path 不匹配：实发 {actual_path} != 录制 {expected['path']}"
             )
 
             # 记录实发请求体（供测试断言「文本字段是不是纯字符串」）

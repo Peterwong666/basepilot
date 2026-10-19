@@ -102,7 +102,7 @@ _WAVE_TEMPLATES: tuple[Wave, ...] = (
         ),
         gate="数据源就位 + AI 草案人工复核成本 < 纯人工成本",
         rationale="AI 草拟强依赖数据源、复核有成本，是四种模式里门槛最高的 —— "
-                  "放最后，用前两波攒的信任换数据配合。",
+        "放最后，用前两波攒的信任换数据配合。",
     ),
 )
 
@@ -122,9 +122,11 @@ def render(
     lines: list[str] = []
     lines.append("# 推广日历：单点跑通后，按什么节奏铺出去")
     lines.append("")
-    lines.append(f"> 生成日期：{today}　|　推广波次：**{len(waves)} 波**　|　"
-                 f"可推广能力模式：**{len(patterns)} 种**　|　"
-                 f"前置：`docs/delivery/expansion_matrix.md`")
+    lines.append(
+        f"> 生成日期：{today}　|　推广波次：**{len(waves)} 波**　|　"
+        f"可推广能力模式：**{len(patterns)} 种**　|　"
+        f"前置：`docs/delivery/expansion_matrix.md`"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -134,15 +136,20 @@ def render(
     lines.append("")
     lines.append("expansion_matrix 说了「这套打法**能**复制到哪」；")
     lines.append("这份日历说的是「**按什么节奏**铺」—— 复制的顺序本身就是决策：")
-    lines.append("铺错顺序（先上最难的 AI 草拟），会在数据源没就位时翻车，"
-                 "把「方法可信」一起赔进去。")
+    lines.append(
+        "铺错顺序（先上最难的 AI 草拟），会在数据源没就位时翻车，把「方法可信」一起赔进去。"
+    )
     lines.append("")
-    lines.append("**排序原则：先稳后难。** 零数据依赖、零 AI 风险的先铺，"
-                 "强依赖数据源、有复核成本的后铺；每一波都用前一波攒下的信任，"
-                 "换下一波所需的配合。")
+    lines.append(
+        "**排序原则：先稳后难。** 零数据依赖、零 AI 风险的先铺，"
+        "强依赖数据源、有复核成本的后铺；每一波都用前一波攒下的信任，"
+        "换下一波所需的配合。"
+    )
     lines.append("")
-    lines.append("> ⚠️ 时间轴（T0 / 第 N 月）是**规划模板**，是定性决策，"
-                 "不是算出来的。能力模式、场景数、年省工时才是实算。")
+    lines.append(
+        "> ⚠️ 时间轴（T0 / 第 N 月）是**规划模板**，是定性决策，"
+        "不是算出来的。能力模式、场景数、年省工时才是实算。"
+    )
     lines.append("")
 
     # ---- 日历总览 ----
@@ -170,8 +177,9 @@ def render(
         if w.pattern_id and w.pattern_id in pmap:
             p = pmap[w.pattern_id]
             hours = f"{p.total_hours:.0f} 小时/年" if p.total_hours > 0 else "—"
-            lines.append(f"- **能力模式**：{p.name}（跨境已验证 {len(p.scenario_names)} 场景，"
-                         f"年省 {hours}）")
+            lines.append(
+                f"- **能力模式**：{p.name}（跨境已验证 {len(p.scenario_names)} 场景，年省 {hours}）"
+            )
             lines.append(f"- **做法**：{p.recipe}")
         else:
             lines.append("- **性质**：复制母版（元动作，不属于单一能力模式）")
@@ -192,17 +200,22 @@ def render(
     lines.append("## 贯穿每一波的「劝退闸」")
     lines.append("")
     if reject:
-        lines.append(f"四种能力模式里，「**{reject.name}**」不是独立波次，而是**每一波的前置提问**。")
+        lines.append(
+            f"四种能力模式里，「**{reject.name}**」不是独立波次，而是**每一波的前置提问**。"
+        )
         lines.append("")
         lines.append("每铺一条新业务线，先问两句：")
         lines.append("")
         lines.append("1. **数据源就位吗？** 不在自己系统里 → 先补数据登记，别上自动化")
-        lines.append("2. **动作可逆吗？** 出错外部可见（申报/改价/发给客户）→ "
-                     "交专业人士，AI 只做预检")
+        lines.append(
+            "2. **动作可逆吗？** 出错外部可见（申报/改价/发给客户）→ 交专业人士，AI 只做预检"
+        )
         lines.append("")
-        lines.append(f"跨境母版已用 {len(reject.scenario_names)} 个劝退案例"
-                     f"（{'、'.join(reject.scenario_names)}）验证了这套闸的价值："
-                     "敢在数据源没就位时说「先别做」，是复制的底气。")
+        lines.append(
+            f"跨境母版已用 {len(reject.scenario_names)} 个劝退案例"
+            f"（{'、'.join(reject.scenario_names)}）验证了这套闸的价值："
+            "敢在数据源没就位时说「先别做」，是复制的底气。"
+        )
     lines.append("")
 
     # ---- 节奏原则收束 ----
@@ -222,11 +235,13 @@ def render(
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append(f"> 本日历由 `scripts/gen_rollout_calendar.py` 自动生成。"
-                 f"能力模式/场景数/年省工时从 `diagnosis.py` 实算"
-                 f"（覆盖 {n_scenarios} 个已诊断场景）；"
-                 "波次时间轴为规划模板（定性决策）。改场景包后重跑 "
-                 "`python scripts/gen_rollout_calendar.py` 更新模式部分。")
+    lines.append(
+        f"> 本日历由 `scripts/gen_rollout_calendar.py` 自动生成。"
+        f"能力模式/场景数/年省工时从 `diagnosis.py` 实算"
+        f"（覆盖 {n_scenarios} 个已诊断场景）；"
+        "波次时间轴为规划模板（定性决策）。改场景包后重跑 "
+        "`python scripts/gen_rollout_calendar.py` 更新模式部分。"
+    )
     return "\n".join(lines)
 
 

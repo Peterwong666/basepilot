@@ -117,10 +117,7 @@ def _backtest_write_plain_string(it: list[Interaction]) -> BacktestCase:
     若按读回结构写入会被 1254060 拒绝。」
     事实（cassette）：录制时所有写路径（create/update）纯字符串，全程 code=0、无 1254060。
     """
-    writes = [
-        x for x in it
-        if ("batch_create" in x.path) or ("batch_update" in x.path)
-    ]
+    writes = [x for x in it if ("batch_create" in x.path) or ("batch_update" in x.path)]
     saw_conv_fail = any(x.code == 1254060 for x in it)
     passed = bool(writes) and not saw_conv_fail
     detail = (
@@ -190,9 +187,7 @@ def _backtest_serialization(ev: dict[str, object]) -> BacktestCase:
     )
 
 
-def collect_cases(
-    it: list[Interaction], ev: dict[str, object]
-) -> list[BacktestCase]:
+def collect_cases(it: list[Interaction], ev: dict[str, object]) -> list[BacktestCase]:
     """汇总全部回测案例。"""
     return [
         _backtest_upsert_idempotent(it),
@@ -215,9 +210,11 @@ def render(cases: list[BacktestCase], n_interactions: int) -> str:
     lines: list[str] = []
     lines.append("# 案例回测：当初的预测，兑现了吗")
     lines.append("")
-    lines.append(f"> 生成日期：{today}　|　回测案例：**{passed_n}/{total} 兑现**　|　"
-                 f"真实交互证据：**{n_interactions} 条**（cassette）　|　"
-                 f"前置：`docs/delivery/solution_blueprint.md`")
+    lines.append(
+        f"> 生成日期：{today}　|　回测案例：**{passed_n}/{total} 兑现**　|　"
+        f"真实交互证据：**{n_interactions} 条**（cassette）　|　"
+        f"前置：`docs/delivery/solution_blueprint.md`"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -225,16 +222,20 @@ def render(cases: list[BacktestCase], n_interactions: int) -> str:
     # ---- 定位 ----
     lines.append("## 这份回测是什么")
     lines.append("")
-    lines.append("诊断（discovery_report）给的是**预测**，方案（solution_blueprint）给的是**承诺**；")
+    lines.append(
+        "诊断（discovery_report）给的是**预测**，方案（solution_blueprint）给的是**承诺**；"
+    )
     lines.append("这份回测回答的是客户最该问、也最难答的一句：**「凭什么信你？」**")
     lines.append("")
     lines.append("做法是把当初写进诊断/方案/ADR 的每一条**可证伪预测**，")
     lines.append("拿落盘的**真实证据**（cassette 录制的真实租户交互 + eval 压测实算）逐条对账：")
     lines.append("预测说「会这样」，事实是不是「真这样」。")
     lines.append("")
-    lines.append("**回测的意义不在于全对，而在于「敢对账」。** "
-                 "只讲预测、不回测的交付是单向输出；"
-                 "把预测摆出来让事实检验，才是可追责的工程。")
+    lines.append(
+        "**回测的意义不在于全对，而在于「敢对账」。** "
+        "只讲预测、不回测的交付是单向输出；"
+        "把预测摆出来让事实检验，才是可追责的工程。"
+    )
     lines.append("")
 
     # ---- 总览 ----
@@ -257,8 +258,10 @@ def render(cases: list[BacktestCase], n_interactions: int) -> str:
         lines.append(f"### {i}. {c.title}")
         lines.append("")
         lines.append(f"- **当初的预测**：{c.prediction}")
-        lines.append(f"- **回测证据**：`{c.evidence.split('（')[0]}`"
-                     f"（{c.evidence.split('（')[1].rstrip('）') if '（' in c.evidence else ''}）")
+        lines.append(
+            f"- **回测证据**：`{c.evidence.split('（')[0]}`"
+            f"（{c.evidence.split('（')[1].rstrip('）') if '（' in c.evidence else ''}）"
+        )
         lines.append(f"- **回测结果**：{mark}")
         lines.append(f"- **实算明细**：{c.detail}")
         lines.append("")
@@ -286,17 +289,20 @@ def render(cases: list[BacktestCase], n_interactions: int) -> str:
     lines.append("## 回测和客户的关系")
     lines.append("")
     lines.append("- **预测可证伪**：每条预测都写清「会这样」，留了被事实推翻的余地")
-    lines.append("- **证据可复算**：cassette / eval_report 都是机器产物，"
-                 "重跑一次就能重算，不靠嘴说")
+    lines.append(
+        "- **证据可复算**：cassette / eval_report 都是机器产物，重跑一次就能重算，不靠嘴说"
+    )
     lines.append("- **结论可追责**：兑现就是兑现，未兑现就归因 —— 这是 FDE 与「卖方案」的区别")
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("> 本回测由 `scripts/gen_case_backtest.py` 自动生成，"
-                 "结论从 `tests/cassettes/cross_border_upsert.jsonl` 与 "
-                 "`eval/reports/eval_report.json` 实算，不手写。"
-                 "重录 cassette 或重跑 eval 后，执行 "
-                 "`python scripts/gen_case_backtest.py` 即可更新。")
+    lines.append(
+        "> 本回测由 `scripts/gen_case_backtest.py` 自动生成，"
+        "结论从 `tests/cassettes/cross_border_upsert.jsonl` 与 "
+        "`eval/reports/eval_report.json` 实算，不手写。"
+        "重录 cassette 或重跑 eval 后，执行 "
+        "`python scripts/gen_case_backtest.py` 即可更新。"
+    )
     return "\n".join(lines)
 
 

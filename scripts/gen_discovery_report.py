@@ -45,8 +45,10 @@ def render(results: list) -> str:  # type: ignore[type-arg]
     lines: list[str] = []
     lines.append("# 客户业务诊断报告：哪个环节值得上 AI")
     lines.append("")
-    lines.append(f"> 生成日期：{today}　|　评估环节：**{len(results)} 个**　|　"
-                 f"建议投入：**{len(actionable)} 个**　|　明确劝退：**{len(rejected)} 个**")
+    lines.append(
+        f"> 生成日期：{today}　|　评估环节：**{len(results)} 个**　|　"
+        f"建议投入：**{len(actionable)} 个**　|　明确劝退：**{len(rejected)} 个**"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -78,9 +80,7 @@ def render(results: list) -> str:  # type: ignore[type-arg]
         "loss_impact": ("不做会亏多少？", "防损型环节的价值不体现在工时上"),
     }
     for key, (question, _why) in weights_note.items():
-        lines.append(
-            f"| **{DIMENSION_LABEL[key]}** | {question} | {DEFAULT_WEIGHTS[key]:.2f} |"
-        )
+        lines.append(f"| **{DIMENSION_LABEL[key]}** | {question} | {DEFAULT_WEIGHTS[key]:.2f} |")
     lines.append("")
     lines.append("> 特别注意「避损失」这一维：断货一次亏的钱，可能超过客服一年省下的工时。")
     lines.append("> **「省时间」和「避损失」是两回事**，所以指数和优先级是两个排序。")
@@ -101,9 +101,11 @@ def render(results: list) -> str:  # type: ignore[type-arg]
         )
     lines.append("")
     if top:
-        lines.append(f"**建议从「{top.scenario.name}」起步**："
-                     f"指数 {top.score:.0f}、年省 {top.annual_hours_saved:.0f} 小时，"
-                     f"且 {QUADRANT_LABEL[top.quadrant]}，落地最稳。")
+        lines.append(
+            f"**建议从「{top.scenario.name}」起步**："
+            f"指数 {top.score:.0f}、年省 {top.annual_hours_saved:.0f} 小时，"
+            f"且 {QUADRANT_LABEL[top.quadrant]}，落地最稳。"
+        )
         lines.append("")
 
     # ---- 4. 四象限落地形态 ----
@@ -120,8 +122,9 @@ def render(results: list) -> str:  # type: ignore[type-arg]
         lines.append(f"**做法**：{QUADRANT_STRATEGY[q]}")
         lines.append("")
         for d in group:
-            lines.append(f"- **{d.scenario.name}**（指数 {d.score:.0f}，"
-                         f"年省 {d.annual_hours_saved:.0f}h）")
+            lines.append(
+                f"- **{d.scenario.name}**（指数 {d.score:.0f}，年省 {d.annual_hours_saved:.0f}h）"
+            )
             if d.reject_reason:
                 lines.append(f"  - 劝退理由：{d.reject_reason}")
             lines.append(f"  - 业务依据：{d.scenario.evidence.strip()}")
@@ -156,9 +159,11 @@ def render(results: list) -> str:  # type: ignore[type-arg]
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("> 本报告由 `scripts/gen_discovery_report.py` 自动生成，"
-                 "所有数字来自 `src/basepilot/diagnosis.py` 实算。"
-                 "场景清单改动后重跑 `python scripts/gen_discovery_report.py` 即可更新。")
+    lines.append(
+        "> 本报告由 `scripts/gen_discovery_report.py` 自动生成，"
+        "所有数字来自 `src/basepilot/diagnosis.py` 实算。"
+        "场景清单改动后重跑 `python scripts/gen_discovery_report.py` 即可更新。"
+    )
     return "\n".join(lines)
 
 
@@ -167,9 +172,11 @@ def main() -> int:
     results = diagnose_all(scenarios)
     OUT.write_text(render(results), encoding="utf-8")
     print(f"✅ 已生成 {OUT}")
-    print(f"   评估 {len(results)} 个环节，"
-          f"建议投入 {sum(1 for d in results if d.quadrant is not Quadrant.D_REJECT)} 个，"
-          f"劝退 {sum(1 for d in results if d.quadrant is Quadrant.D_REJECT)} 个")
+    print(
+        f"   评估 {len(results)} 个环节，"
+        f"建议投入 {sum(1 for d in results if d.quadrant is not Quadrant.D_REJECT)} 个，"
+        f"劝退 {sum(1 for d in results if d.quadrant is Quadrant.D_REJECT)} 个"
+    )
     return 0
 
 

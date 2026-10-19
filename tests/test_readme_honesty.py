@@ -65,9 +65,7 @@ def test_readme_declared_test_count_matches_reality() -> None:
     declared = int(m.group(1))
 
     per_file = _collect_per_file()
-    actual = sum(per_file.values()) - per_file.get(
-        "tests/test_readme_honesty.py", 0
-    )
+    actual = sum(per_file.values()) - per_file.get("tests/test_readme_honesty.py", 0)
 
     assert declared == actual, (
         f"README 声明 {declared} tests，项目实际（不含本门禁自身）{actual} 个 —— "
@@ -84,9 +82,7 @@ def test_readme_progress_table_has_no_unfinished_wording() -> None:
     section = md[m.start() : md.find("\n---", m.start())]
 
     for word in ("建设中", "进行中", "TODO", "待完成", "暂未"):
-        assert word not in section, (
-            f"进度表出现「{word}」—— 代码已完成就别让文案停在建设期"
-        )
+        assert word not in section, f"进度表出现「{word}」—— 代码已完成就别让文案停在建设期"
 
 
 def test_readme_error_code_count_matches_errors_py() -> None:

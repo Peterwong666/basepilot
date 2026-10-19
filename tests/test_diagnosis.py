@@ -147,15 +147,27 @@ def test_b_quadrant_saves_less_than_a() -> None:
     但「错得起=0 + 避损失=0」把指数压到 58，落在 B 区间。
     """
     a_dims = dict.fromkeys(DEFAULT_WEIGHTS, 5)
-    a = Scenario(id="a", name="a", dimensions=a_dims,
-                 human_minutes_per_run=60, runs_per_year=365, evidence="e")
+    a = Scenario(
+        id="a",
+        name="a",
+        dimensions=a_dims,
+        human_minutes_per_run=60,
+        runs_per_year=365,
+        evidence="e",
+    )
 
     b_dims = dict.fromkeys(DEFAULT_WEIGHTS, 5)
     b_dims["rule_clarity"] = 3
     b_dims["fault_tolerance"] = 0
     b_dims["loss_impact"] = 0
-    b = Scenario(id="b", name="b", dimensions=b_dims,
-                 human_minutes_per_run=60, runs_per_year=365, evidence="e")
+    b = Scenario(
+        id="b",
+        name="b",
+        dimensions=b_dims,
+        human_minutes_per_run=60,
+        runs_per_year=365,
+        evidence="e",
+    )
 
     assert a.quadrant() is Quadrant.A_AUTO
     assert b.quadrant() is Quadrant.B_ASSISTED, f"实际为 {b.quadrant()}"
@@ -165,8 +177,14 @@ def test_b_quadrant_saves_less_than_a() -> None:
 
 def test_annual_hours_math() -> None:
     """年省工时 = 分钟/60 × 次数/年 × 象限折算率（A 象限 0.9）。"""
-    s = Scenario(id="x", name="x", dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 5),
-                 human_minutes_per_run=60, runs_per_year=365, evidence="e")
+    s = Scenario(
+        id="x",
+        name="x",
+        dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 5),
+        human_minutes_per_run=60,
+        runs_per_year=365,
+        evidence="e",
+    )
     # 365 小时 × 0.9（A 象限仍需抽查，不是完全无人）
     assert s.annual_hours_saved() == pytest.approx(365.0 * 0.9)
 
@@ -183,8 +201,9 @@ def test_fuzzy_rules_force_ai_first() -> None:
     """
     dims = dict.fromkeys(DEFAULT_WEIGHTS, 5)
     dims["rule_clarity"] = FUZZY_RULE_THRESHOLD  # 模糊规则
-    s = Scenario(id="x", name="x", dimensions=dims,
-                 human_minutes_per_run=30, runs_per_year=365, evidence="e")
+    s = Scenario(
+        id="x", name="x", dimensions=dims, human_minutes_per_run=30, runs_per_year=365, evidence="e"
+    )
     d = diagnose(s)
     # 指数很高（只扣了规则明确度的分），但仍必须 AI 主导
     assert d.score > THRESHOLD_AUTO, "前提：加权总分仍然很高"
@@ -195,8 +214,9 @@ def test_clear_rules_above_threshold_is_auto() -> None:
     """对照组：规则明确 + 总分高 → A 象限（工作流即可）。"""
     dims = dict.fromkeys(DEFAULT_WEIGHTS, 5)
     dims["rule_clarity"] = FUZZY_RULE_THRESHOLD + 1
-    s = Scenario(id="x", name="x", dimensions=dims,
-                 human_minutes_per_run=10, runs_per_year=100, evidence="e")
+    s = Scenario(
+        id="x", name="x", dimensions=dims, human_minutes_per_run=10, runs_per_year=100, evidence="e"
+    )
     assert diagnose(s).quadrant is Quadrant.A_AUTO
 
 
@@ -210,8 +230,9 @@ def test_dimension_must_be_0_to_5(bad: int) -> None:
     """越界分数必须报错，而不是被静默裁剪。"""
     dims = dict.fromkeys(DEFAULT_WEIGHTS, 3)
     dims["frequency"] = bad
-    s = Scenario(id="x", name="x", dimensions=dims,
-                 human_minutes_per_run=1, runs_per_year=1, evidence="e")
+    s = Scenario(
+        id="x", name="x", dimensions=dims, human_minutes_per_run=1, runs_per_year=1, evidence="e"
+    )
     with pytest.raises(DiagnosisError, match="0-5"):
         s.validate()
 
@@ -220,8 +241,9 @@ def test_unknown_dimension_rejected() -> None:
     """拼错的维度名要报错—— 否则权重查不到会 KeyError。"""
     dims = dict.fromkeys(DEFAULT_WEIGHTS, 3)
     dims["freqency"] = 3  # typo
-    s = Scenario(id="x", name="x", dimensions=dims,
-                 human_minutes_per_run=1, runs_per_year=1, evidence="e")
+    s = Scenario(
+        id="x", name="x", dimensions=dims, human_minutes_per_run=1, runs_per_year=1, evidence="e"
+    )
     with pytest.raises(DiagnosisError, match="未知维度"):
         s.validate()
 
@@ -229,23 +251,36 @@ def test_unknown_dimension_rejected() -> None:
 def test_missing_dimension_rejected() -> None:
     dims = dict.fromkeys(DEFAULT_WEIGHTS, 3)
     del dims["fault_tolerance"]
-    s = Scenario(id="x", name="x", dimensions=dims,
-                 human_minutes_per_run=1, runs_per_year=1, evidence="e")
+    s = Scenario(
+        id="x", name="x", dimensions=dims, human_minutes_per_run=1, runs_per_year=1, evidence="e"
+    )
     with pytest.raises(DiagnosisError, match="缺少维度"):
         s.validate()
 
 
 def test_unknown_hard_reject_key_rejected() -> None:
-    s = Scenario(id="x", name="x", dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 3),
-                 human_minutes_per_run=1, runs_per_year=1, evidence="e",
-                 hard_reject="i_am_made_up")
+    s = Scenario(
+        id="x",
+        name="x",
+        dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 3),
+        human_minutes_per_run=1,
+        runs_per_year=1,
+        evidence="e",
+        hard_reject="i_am_made_up",
+    )
     with pytest.raises(DiagnosisError, match="未知 hard_reject"):
         s.validate()
 
 
 def test_negative_cost_rejected() -> None:
-    s = Scenario(id="x", name="x", dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 3),
-                 human_minutes_per_run=-5, runs_per_year=1, evidence="e")
+    s = Scenario(
+        id="x",
+        name="x",
+        dimensions=dict.fromkeys(DEFAULT_WEIGHTS, 3),
+        human_minutes_per_run=-5,
+        runs_per_year=1,
+        evidence="e",
+    )
     with pytest.raises(DiagnosisError, match="不能为负"):
         s.validate()
 
@@ -370,12 +405,10 @@ def test_known_disagreement_with_human_judgement(scenarios: list[Scenario]) -> N
     # 客服工单省工时更多
     assert t_hours > s_hours, "前提：客服工单的年省工时更高"
     # 但人工把客服排在断货之后（human_rank 数字更大 = 优先级更低）
-    assert ticket.human_rank > stockout.human_rank, (
-        "前提：人工判断中，客服工单的优先级低于断货预警"
-    )
+    assert ticket.human_rank > stockout.human_rank, "前提：人工判断中，客服工单的优先级低于断货预警"
     # 且模型靠 loss_impact 把断货排到了客服之前 —— 这正是第五维的价值
     assert results["stockout_risk_alert"].priority > results["support_ticket_routing"].priority, (
-        "loss_impact 维度应把\"避损失\"的场景排到\"省工时\"的场景之前"
+        'loss_impact 维度应把"避损失"的场景排到"省工时"的场景之前'
     )
 
 
@@ -430,11 +463,7 @@ def test_loss_impact_changes_some_scenarios(scenarios: list[Scenario]) -> None:
         "loss_impact": 0.0,
     }
 
-    changed = [
-        s.id
-        for s in scenarios
-        if abs(s.score() - s.score(weights_without)) > 1e-9
-    ]
+    changed = [s.id for s in scenarios if abs(s.score() - s.score(weights_without)) > 1e-9]
     assert changed, "调整 loss_impact 权重后没有任何场景的指数发生变化，该维度形同虚设"
 
 
@@ -448,9 +477,7 @@ def test_top_scenario_is_actionable(scenarios: list[Scenario]) -> None:
 def test_sorted_descending(scenarios: list[Scenario]) -> None:
     """输出必须按**优先级**降序（不是按指数）。"""
     results = diagnose_all(scenarios)
-    assert [d.priority for d in results] == sorted(
-        [d.priority for d in results], reverse=True
-    )
+    assert [d.priority for d in results] == sorted([d.priority for d in results], reverse=True)
 
 
 def test_priority_differs_from_score(scenarios: list[Scenario]) -> None:

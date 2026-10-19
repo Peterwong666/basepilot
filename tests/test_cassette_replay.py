@@ -37,9 +37,7 @@ def replay() -> ReplayTransport:
 def _client(replay: ReplayTransport) -> BitableClient:
     import httpx
 
-    http = httpx.AsyncClient(
-        transport=replay, base_url="https://open.feishu.cn/open-apis"
-    )
+    http = httpx.AsyncClient(transport=replay, base_url="https://open.feishu.cn/open-apis")
     # app_id/secret 用占位符即可 —— 重放不会真发请求
     return BitableClient("cli_replay", "secret_replay", http_client=http)
 
@@ -54,14 +52,16 @@ async def test_replay_full_delivery_flow(replay: ReplayTransport) -> None:
         assert "SKU" in meta
 
         r1 = await client.upsert_records(
-            APP, TABLE,
+            APP,
+            TABLE,
             [{"SKU": PROBE_SKU, "FBA库存": 1, "库存健康": "正常"}],
             "SKU",
         )
         assert r1["created"] == 1 and r1["updated"] == 0
 
         r2 = await client.upsert_records(
-            APP, TABLE,
+            APP,
+            TABLE,
             [
                 {"SKU": PROBE_SKU, "FBA库存": 2, "库存健康": "正常"},
                 {"SKU": "PET-BOWL-001", "FBA库存": 95},
@@ -74,15 +74,14 @@ async def test_replay_full_delivery_flow(replay: ReplayTransport) -> None:
         assert len(items) == 4  # 3 条种子 + 1 条 probe（录制时序）
 
         probe = next(
-            i for i in items
+            i
+            for i in items
             if isinstance((i.get("fields") or {}).get("SKU"), list)
             and i["fields"]["SKU"][0].get("text") == PROBE_SKU
         )
         await client.delete_records(APP, TABLE, [probe["record_id"]])
 
-    assert replay.exhausted, (
-        f"cassette 有 {len(replay._entries)} 条，实际只消费了 {replay._idx} 条"
-    )
+    assert replay.exhausted, f"cassette 有 {len(replay._entries)} 条，实际只消费了 {replay._idx} 条"
 
 
 @pytest.mark.asyncio
@@ -96,15 +95,15 @@ async def test_write_side_uses_plain_string_not_richtext(replay: ReplayTransport
         client._serializer._min_interval = 0.0
         await client.list_fields(APP, TABLE)
         await client.upsert_records(
-            APP, TABLE,
+            APP,
+            TABLE,
             [{"SKU": PROBE_SKU, "FBA库存": 1, "库存健康": "正常"}],
             "SKU",
         )
 
     # 找到 batch_create 那一条（seq=4），检查请求体
     create_req = next(
-        r for r in replay.request_log
-        if r["json"] and "records" in r["json"] and r["seq"] == 4
+        r for r in replay.request_log if r["json"] and "records" in r["json"] and r["seq"] == 4
     )
     fields = create_req["json"]["records"][0]["fields"]
     assert isinstance(fields["SKU"], str), (

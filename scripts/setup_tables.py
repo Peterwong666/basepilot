@@ -43,15 +43,28 @@ def _load_env() -> None:
 INVENTORY_FIELDS = [
     {"field_name": "SKU", "type": 1},  # 文本（唯一键）
     {"field_name": "ASIN", "type": 1},
-    {"field_name": "站点", "type": 3, "property": {"options": [
-        {"name": "US"}, {"name": "DE"}, {"name": "JP"}]}},
+    {
+        "field_name": "站点",
+        "type": 3,
+        "property": {"options": [{"name": "US"}, {"name": "DE"}, {"name": "JP"}]},
+    },
     {"field_name": "FBA库存", "type": 2},
     {"field_name": "在途库存", "type": 2},
     {"field_name": "日均销量", "type": 2},
-    {"field_name": "可售天数", "type": 20, "property": {  # 公式（系统只读）
-        "formula_expression": "IF({日均销量}>0, {FBA库存}/{日均销量}, 999)"}},
-    {"field_name": "库存健康", "type": 3, "property": {"options": [
-        {"name": "正常"}, {"name": "预警"}, {"name": "断货风险"}, {"name": "压货"}]}},
+    {
+        "field_name": "可售天数",
+        "type": 20,
+        "property": {  # 公式（系统只读）
+            "formula_expression": "IF({日均销量}>0, {FBA库存}/{日均销量}, 999)"
+        },
+    },
+    {
+        "field_name": "库存健康",
+        "type": 3,
+        "property": {
+            "options": [{"name": "正常"}, {"name": "预警"}, {"name": "断货风险"}, {"name": "压货"}]
+        },
+    },
     {"field_name": "负责人", "type": 11},
     {"field_name": "最近盘点", "type": 5, "property": {"date_formatter": "yyyy-MM-dd"}},
 ]
@@ -60,16 +73,35 @@ INVENTORY_FIELDS = [
 ADS_FIELDS = [
     {"field_name": "广告活动", "type": 1},
     {"field_name": "SKU", "type": 1},
-    {"field_name": "异常类型", "type": 4, "property": {"options": [  # 多选
-        {"name": "ACOS超标"}, {"name": "花费突增"}, {"name": "曝光暴跌"},
-        {"name": "转化归零"}, {"name": "预算耗尽"}]}},
+    {
+        "field_name": "异常类型",
+        "type": 4,
+        "property": {
+            "options": [  # 多选
+                {"name": "ACOS超标"},
+                {"name": "花费突增"},
+                {"name": "曝光暴跌"},
+                {"name": "转化归零"},
+                {"name": "预算耗尽"},
+            ]
+        },
+    },
     {"field_name": "ACOS", "type": 2},
     {"field_name": "日花费", "type": 2},
-    {"field_name": "严重程度", "type": 3, "property": {"options": [
-        {"name": "P0"}, {"name": "P1"}, {"name": "P2"}]}},
+    {
+        "field_name": "严重程度",
+        "type": 3,
+        "property": {"options": [{"name": "P0"}, {"name": "P1"}, {"name": "P2"}]},
+    },
     {"field_name": "广告后台", "type": 15},  # 超链接
-    {"field_name": "关联库存", "type": 21, "property": {  # 双向关联（占位，建表后回填 table_id）
-        "table_id": "", "multiple": True}},
+    {
+        "field_name": "关联库存",
+        "type": 21,
+        "property": {  # 双向关联（占位，建表后回填 table_id）
+            "table_id": "",
+            "multiple": True,
+        },
+    },
     {"field_name": "发现时间", "type": 5, "property": {"date_formatter": "yyyy-MM-dd HH:mm"}},
     {"field_name": "处理人", "type": 11},
 ]
@@ -78,15 +110,38 @@ ADS_FIELDS = [
 REVIEW_FIELDS = [
     {"field_name": "订单号", "type": 1},  # 唯一键
     {"field_name": "SKU", "type": 1},
-    {"field_name": "星级", "type": 3, "property": {"options": [
-        {"name": "1星"}, {"name": "2星"}, {"name": "3星"}]}},
-    {"field_name": "差评标签", "type": 4, "property": {"options": [  # 多选
-        {"name": "质量"}, {"name": "物流"}, {"name": "尺寸"},
-        {"name": "描述不符"}, {"name": "客服"}]}},
+    {
+        "field_name": "星级",
+        "type": 3,
+        "property": {"options": [{"name": "1星"}, {"name": "2星"}, {"name": "3星"}]},
+    },
+    {
+        "field_name": "差评标签",
+        "type": 4,
+        "property": {
+            "options": [  # 多选
+                {"name": "质量"},
+                {"name": "物流"},
+                {"name": "尺寸"},
+                {"name": "描述不符"},
+                {"name": "客服"},
+            ]
+        },
+    },
     {"field_name": "差评内容", "type": 1},
     {"field_name": "买家链接", "type": 15},
-    {"field_name": "处理状态", "type": 3, "property": {"options": [
-        {"name": "待处理"}, {"name": "跟进中"}, {"name": "已解决"}, {"name": "无法挽回"}]}},
+    {
+        "field_name": "处理状态",
+        "type": 3,
+        "property": {
+            "options": [
+                {"name": "待处理"},
+                {"name": "跟进中"},
+                {"name": "已解决"},
+                {"name": "无法挽回"},
+            ]
+        },
+    },
     {"field_name": "需要退款", "type": 7},  # 复选框
     {"field_name": "处理人", "type": 11},
     {"field_name": "差评日期", "type": 5, "property": {"date_formatter": "yyyy-MM-dd"}},

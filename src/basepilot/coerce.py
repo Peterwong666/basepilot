@@ -102,10 +102,10 @@ def coerce_single_select(field: str, ftype: FieldType, value: Any) -> str:
             field,
             ftype,
             value,
-            "单个选项名字符串（不是数组），如 \"正常\"",
+            '单个选项名字符串（不是数组），如 "正常"',
             "1254062",
         )
-    raise _fail(field, ftype, value, "选项名字符串，如 \"正常\"", "1254062")
+    raise _fail(field, ftype, value, '选项名字符串，如 "正常"', "1254062")
 
 
 def coerce_multi_select(field: str, ftype: FieldType, value: Any) -> list[str]:
@@ -115,8 +115,8 @@ def coerce_multi_select(field: str, ftype: FieldType, value: Any) -> list[str]:
     if isinstance(value, (list, tuple)):
         if all(isinstance(v, str) for v in value):
             return list(value)
-        raise _fail(field, ftype, value, "字符串数组，如 [\"A\", \"B\"]", "1254062")
-    raise _fail(field, ftype, value, "字符串数组，如 [\"A\", \"B\"]", "1254062")
+        raise _fail(field, ftype, value, '字符串数组，如 ["A", "B"]', "1254062")
+    raise _fail(field, ftype, value, '字符串数组，如 ["A", "B"]', "1254062")
 
 
 _MS_RE = re.compile(r"^\d{13}$")
@@ -168,7 +168,7 @@ def coerce_datetime(field: str, ftype: FieldType, value: Any) -> int:
             field,
             ftype,
             value,
-            "13 位毫秒时间戳或 ISO 日期，如 1674206443000 或 \"2026-10-18\"",
+            '13 位毫秒时间戳或 ISO 日期，如 1674206443000 或 "2026-10-18"',
             "1254064",
         )
     if isinstance(value, datetime):
@@ -205,7 +205,7 @@ def coerce_user(field: str, ftype: FieldType, value: Any) -> list[dict[str, str]
     elif isinstance(value, (list, tuple)):
         items = list(value)
     else:
-        raise _fail(field, ftype, value, "[{\"id\": \"ou_xxx\"}]", "1254066")
+        raise _fail(field, ftype, value, '[{"id": "ou_xxx"}]', "1254066")
 
     out: list[dict[str, str]] = []
     for it in items:
@@ -214,7 +214,7 @@ def coerce_user(field: str, ftype: FieldType, value: Any) -> list[dict[str, str]
         elif isinstance(it, dict) and "id" in it:
             uid = str(it["id"])
         else:
-            raise _fail(field, ftype, value, "[{\"id\": \"ou_xxx\"}]", "1254066")
+            raise _fail(field, ftype, value, '[{"id": "ou_xxx"}]', "1254066")
         if not uid.startswith("ou_"):
             raise _fail(
                 field,
@@ -234,7 +234,7 @@ def coerce_phone(field: str, ftype: FieldType, value: Any) -> str:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         # 手机号常被 Excel 读成数字，转回字符串（去小数点）
         return str(int(value))
-    raise _fail(field, ftype, value, "手机号字符串，如 \"13800138000\"", "1254062")
+    raise _fail(field, ftype, value, '手机号字符串，如 "13800138000"', "1254062")
 
 
 def coerce_url(field: str, ftype: FieldType, value: Any) -> dict[str, str]:
@@ -250,14 +250,14 @@ def coerce_url(field: str, ftype: FieldType, value: Any) -> dict[str, str]:
             field,
             ftype,
             value,
-            "{\"link\": \"https://...\", \"text\": \"显示文本\"}",
+            '{"link": "https://...", "text": "显示文本"}',
             "1254062",
         )
     if isinstance(value, dict) and "link" in value:
         link = str(value["link"])
         text = str(value.get("text", link))
         return {"link": link, "text": text}
-    raise _fail(field, ftype, value, "{\"link\": \"...\", \"text\": \"...\"}", "1254062")
+    raise _fail(field, ftype, value, '{"link": "...", "text": "..."}', "1254062")
 
 
 def coerce_attachment(field: str, ftype: FieldType, value: Any) -> list[dict[str, str]]:
@@ -273,7 +273,7 @@ def coerce_attachment(field: str, ftype: FieldType, value: Any) -> list[dict[str
     elif isinstance(value, (list, tuple)):
         items = list(value)
     else:
-        raise _fail(field, ftype, value, "[{\"file_token\": \"...\"}]", "1254062")
+        raise _fail(field, ftype, value, '[{"file_token": "..."}]', "1254062")
 
     out: list[dict[str, str]] = []
     for it in items:
@@ -282,7 +282,7 @@ def coerce_attachment(field: str, ftype: FieldType, value: Any) -> list[dict[str
         elif isinstance(it, dict) and "file_token" in it:
             token = str(it["file_token"])
         else:
-            raise _fail(field, ftype, value, "[{\"file_token\": \"...\"}]", "1254062")
+            raise _fail(field, ftype, value, '[{"file_token": "..."}]', "1254062")
         if not token:
             raise _fail(field, ftype, value, "非空 file_token", "1254062")
         out.append({"file_token": token})
@@ -302,9 +302,9 @@ def coerce_link(field: str, ftype: FieldType, value: Any) -> list[str]:
         field,
         ftype,
         value,
-        "record_id 字符串数组，如 [\"recXXXXXXXX\"]",
+        'record_id 字符串数组，如 ["recXXXXXXXX"]',
         "1254074",
-      )
+    )
 
 
 def coerce_location(field: str, ftype: FieldType, value: Any) -> dict[str, Any]:
@@ -320,9 +320,9 @@ def coerce_location(field: str, ftype: FieldType, value: Any) -> dict[str, Any]:
         field,
         ftype,
         value,
-        "{\"location\": \"地址\", \"pname\": \"地点名\"}",
+        '{"location": "地址", "pname": "地点名"}',
         "1254062",
-      )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -417,9 +417,7 @@ def normalize_key(value: Any) -> str:
         return str(int(value)) if float(value).is_integer() else str(value)
     if isinstance(value, list):
         # 富文本数组：所有元素都是 {"type":"text","text":...}
-        if value and all(
-            isinstance(seg, dict) and seg.get("type") == "text" for seg in value
-        ):
+        if value and all(isinstance(seg, dict) and seg.get("type") == "text" for seg in value):
             return "".join(str(seg.get("text", "")) for seg in value)
         # 纯字符串数组（多选读回）
         if all(isinstance(v, str) for v in value):
@@ -435,9 +433,7 @@ def normalize_key(value: Any) -> str:
     return str(value)
 
 
-def coerce_record(
-    fields_meta: dict[str, int], record: dict[str, Any]
-) -> dict[str, Any]:
+def coerce_record(fields_meta: dict[str, int], record: dict[str, Any]) -> dict[str, Any]:
     """按表字段元信息，批量编码一条记录的所有字段。
 
     Args:

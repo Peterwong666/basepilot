@@ -14,9 +14,7 @@ from ..client import BitableClient
 from ..schema import type_name
 
 
-async def describe_table(
-    client: BitableClient, app_token: str, table_id: str
-) -> dict[str, Any]:
+async def describe_table(client: BitableClient, app_token: str, table_id: str) -> dict[str, Any]:
     """获取数据表的字段结构（写记录前必查）。
 
     返回每个字段的名称、type 编号、可读类型名、是否系统只读。

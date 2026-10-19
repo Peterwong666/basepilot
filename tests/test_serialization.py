@@ -79,9 +79,9 @@ async def test_different_tables_can_run_in_parallel() -> None:
     )
 
     # b 的 start 不应等到 a 的 end 之后
-    assert order.index("b-start") < order.index("a-end") or order.index(
-        "a-start"
-    ) < order.index("b-end")
+    assert order.index("b-start") < order.index("a-end") or order.index("a-start") < order.index(
+        "b-end"
+    )
 
 
 @pytest.mark.asyncio

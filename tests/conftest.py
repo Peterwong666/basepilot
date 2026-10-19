@@ -39,16 +39,33 @@ def sample_schema() -> dict[str, Any]:
     return {
         "table_id": "tblTest123",
         "fields": [
-            {"field_id": "fldSku", "field_name": "SKU", "type": 1, "ui_type": "Text",
-             "is_primary": True},
-            {"field_id": "fldSite", "field_name": "站点", "type": 3, "ui_type": "SingleSelect",
-             "property": {"options": [{"id": "optUS", "name": "US"},
-                                     {"id": "optJP", "name": "JP"}]}},
+            {
+                "field_id": "fldSku",
+                "field_name": "SKU",
+                "type": 1,
+                "ui_type": "Text",
+                "is_primary": True,
+            },
+            {
+                "field_id": "fldSite",
+                "field_name": "站点",
+                "type": 3,
+                "ui_type": "SingleSelect",
+                "property": {
+                    "options": [{"id": "optUS", "name": "US"}, {"id": "optJP", "name": "JP"}]
+                },
+            },
             {"field_id": "fldAvg", "field_name": "日均销量", "type": 2, "ui_type": "Number"},
             {"field_id": "fldStock", "field_name": "现货", "type": 2, "ui_type": "Number"},
-            {"field_id": "fldRisk", "field_name": "风险等级", "type": 4, "ui_type": "MultiSelect",
-             "property": {"options": [{"id": "optLow", "name": "缺货"},
-                                     {"id": "optTr", "name": "在途"}]}},
+            {
+                "field_id": "fldRisk",
+                "field_name": "风险等级",
+                "type": 4,
+                "ui_type": "MultiSelect",
+                "property": {
+                    "options": [{"id": "optLow", "name": "缺货"}, {"id": "optTr", "name": "在途"}]
+                },
+            },
             {"field_id": "fldOwner", "field_name": "负责人", "type": 11, "ui_type": "User"},
             {"field_id": "fldDate", "field_name": "复核日期", "type": 5, "ui_type": "DateTime"},
             {"field_id": "fldLink", "field_name": "商品链接", "type": 15, "ui_type": "Url"},
@@ -56,8 +73,12 @@ def sample_schema() -> dict[str, Any]:
             {"field_id": "fldOver", "field_name": "是否超标", "type": 7, "ui_type": "Checkbox"},
             # 不可写字段
             {"field_id": "fldCalc", "field_name": "覆盖天数", "type": 20, "ui_type": "Formula"},
-            {"field_id": "fldCreated", "field_name": "创建时间", "type": 1001,
-             "ui_type": "CreatedTime"},
+            {
+                "field_id": "fldCreated",
+                "field_name": "创建时间",
+                "type": 1001,
+                "ui_type": "CreatedTime",
+            },
         ],
     }
 

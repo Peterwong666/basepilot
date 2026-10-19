@@ -42,6 +42,7 @@ def test_report_numbers_come_from_real_computation() -> None:
 
     total = len(results)
     from basepilot.diagnosis import Quadrant
+
     rejected = sum(1 for d in results if d.quadrant is Quadrant.D_REJECT)
     actionable = total - rejected
 

@@ -83,6 +83,7 @@ async def test_coverage_dedupes_and_divides_by_baseline(
         return httpx.Response(500, json={"code": 500, "msg": "?"})
 
     import basepilot.client as client_mod
+
     orig = client_mod.BitableClient
 
     transport = httpx.MockTransport(handler)
@@ -123,6 +124,7 @@ async def test_coverage_zero_baseline_returns_na_not_fabricated(
         return httpx.Response(500, json={"code": 500, "msg": "?"})
 
     import basepilot.client as client_mod
+
     orig = client_mod.BitableClient
     transport = httpx.MockTransport(handler)
     http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
@@ -145,7 +147,7 @@ async def test_sla_overdue_counts_only_open_and_old(
     monkeypatch.setenv("BASEPILOT_APP_SECRET", "secret_x")
 
     now_ms = int(time.time() * 1000)
-    old_ms = now_ms - 10 * 86_400_000   # 10 天前（超 7 天 SLA）
+    old_ms = now_ms - 10 * 86_400_000  # 10 天前（超 7 天 SLA）
     recent_ms = now_ms - 2 * 86_400_000  # 2 天前（未超）
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -162,14 +164,20 @@ async def test_sla_overdue_counts_only_open_and_old(
                         "has_more": False,
                         "items": [
                             # 未闭环 + 超期 → 计入 overdue
-                            {"record_id": "r1", "fields": {
-                                "处理状态": "待处理", "差评日期": old_ms}},
+                            {
+                                "record_id": "r1",
+                                "fields": {"处理状态": "待处理", "差评日期": old_ms},
+                            },
                             # 未闭环 + 未超期 → 只计入 total_open
-                            {"record_id": "r2", "fields": {
-                                "处理状态": "跟进中", "差评日期": recent_ms}},
+                            {
+                                "record_id": "r2",
+                                "fields": {"处理状态": "跟进中", "差评日期": recent_ms},
+                            },
                             # 已闭环 → 两边都不计
-                            {"record_id": "r3", "fields": {
-                                "处理状态": "已闭环", "差评日期": old_ms}},
+                            {
+                                "record_id": "r3",
+                                "fields": {"处理状态": "已闭环", "差评日期": old_ms},
+                            },
                         ],
                     },
                 },
@@ -177,6 +185,7 @@ async def test_sla_overdue_counts_only_open_and_old(
         return httpx.Response(500, json={"code": 500, "msg": "?"})
 
     import basepilot.client as client_mod
+
     orig = client_mod.BitableClient
     transport = httpx.MockTransport(handler)
     http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
@@ -185,16 +194,18 @@ async def test_sla_overdue_counts_only_open_and_old(
         lambda a, s: orig(a, s, http_client=http),
     )
 
-    r = await compute(_make_args(
-        baseline=3,
-        status_field="处理状态",
-        date_field="差评日期",
-        sla_days=7,
-    ))
+    r = await compute(
+        _make_args(
+            baseline=3,
+            status_field="处理状态",
+            date_field="差评日期",
+            sla_days=7,
+        )
+    )
     sla = r["sla"]
     assert sla["status"] == "computed"
-    assert sla["total_open"] == 2   # r1 + r2（r3 已闭环）
-    assert sla["overdue"] == 1      # 只有 r1 超期
+    assert sla["total_open"] == 2  # r1 + r2（r3 已闭环）
+    assert sla["overdue"] == 1  # 只有 r1 超期
     assert sla["ratio"] == "50.0%"
     assert sla["healthy"] is False
 
@@ -219,6 +230,7 @@ async def test_adoption_always_pending_config(
         return httpx.Response(500, json={"code": 500, "msg": "?"})
 
     import basepilot.client as client_mod
+
     orig = client_mod.BitableClient
     transport = httpx.MockTransport(handler)
     http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")

@@ -51,9 +51,7 @@ def main() -> int:
 
     changed_total = 0
     for path in files:
-        lines = [
-            ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()
-        ]
+        lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
         new_lines: list[str] = []
         changed = 0
         for ln in lines:

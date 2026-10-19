@@ -73,9 +73,7 @@ class WriteSerializer:
                 self._gates[table_id] = _TableGate()
             return self._gates[table_id]
 
-    async def run(
-        self, table_id: str, op: Callable[[], Awaitable[T]]
-    ) -> T:
+    async def run(self, table_id: str, op: Callable[[], Awaitable[T]]) -> T:
         """在「单表串行 + 节流」约束下执行一次写操作。
 
         Args:

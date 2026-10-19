@@ -78,8 +78,13 @@ MAX_W = 1120
 #: 但 Pillow 按单色渲染出来仍是豆腐块）。终端风格的图更该用 ASCII ——
 #: 读者认得出来，且任何字体都渲染得出来。
 _EMOJI_SUBST = {
-    "✅": "[OK]", "❌": "[X]", "⚠️": "!", "⚠": "!",
-    "🎉": "", "🚀": "", "⭐": "",
+    "✅": "[OK]",
+    "❌": "[X]",
+    "⚠️": "!",
+    "⚠": "!",
+    "🎉": "",
+    "🚀": "",
+    "⭐": "",
 }
 
 #: 走符号字体的字符集合（Songti 无字形，回退 Apple Symbols）
@@ -130,9 +135,12 @@ def _is_symbol(ch: str) -> bool:
     return ch in _SYMBOL_CHARS or ord(ch) == 0xFE0F
 
 
-def _pick_font(ch: str, font_a: ImageFont.FreeTypeFont,
-               font_c: ImageFont.FreeTypeFont,
-               font_s: ImageFont.FreeTypeFont) -> ImageFont.FreeTypeFont:
+def _pick_font(
+    ch: str,
+    font_a: ImageFont.FreeTypeFont,
+    font_c: ImageFont.FreeTypeFont,
+    font_s: ImageFont.FreeTypeFont,
+) -> ImageFont.FreeTypeFont:
     """单字符字体选择：符号 → Apple Symbols，中文 → Songti，其余 → Menlo。"""
     if _is_symbol(ch):
         return font_s
@@ -166,9 +174,7 @@ def _draw_text_with_fallback(
     """
     x, y = xy
     for ch in text:
-        draw.text(
-            (x, y), ch, font=_pick_font(ch, font_ascii, font_cjk, font_symbol), fill=color
-        )
+        draw.text((x, y), ch, font=_pick_font(ch, font_ascii, font_cjk, font_symbol), fill=color)
         # 中文按双倍步进保持视觉等宽；符号不额外占位
         x += char_w * (2 if _is_cjk(ch) else 1)
     return x
@@ -244,9 +250,7 @@ def render_shot(shot: Shot, output: Path) -> Path:
         ]
 
     # 画布宽度取「标题 / 命令 / 正文」三者最宽者，避免标题被裁掉
-    max_units = max(
-        _width_units(ln) for ln in lines
-    )
+    max_units = max(_width_units(ln) for ln in lines)
     title_units = _width_units(shot.title) + 12  # 12 ≈ 三个圆点占位
     cmd_units = _width_units(cmd) + 3  # 3 ≈ "$ " 前缀
     width = min(MAX_W, 2 * PAD + max(max_units, title_units, cmd_units) * CHAR_W + 8)

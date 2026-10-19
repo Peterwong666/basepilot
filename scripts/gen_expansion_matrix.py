@@ -129,17 +129,17 @@ def collect_patterns(results: list) -> list[CapabilityPattern]:  # type: ignore[
 def render(patterns: list[CapabilityPattern], total_scenarios: int) -> str:
     today = date.today().isoformat()
     grand_hours = sum(p.total_hours for p in patterns)
-    actionable_hours = sum(
-        p.total_hours for p in patterns if p.id != "honest_reject"
-    )
+    actionable_hours = sum(p.total_hours for p in patterns if p.id != "honest_reject")
 
     lines: list[str] = []
     lines.append("# 可复制矩阵：这套打法能铺到哪")
     lines.append("")
-    lines.append(f"> 生成日期：{today}　|　归纳能力模式：**{len(patterns)} 种**　|　"
-                 f"覆盖已诊断场景：**{total_scenarios} 个**　|　"
-                 f"可落地年省：**{actionable_hours:.0f} 小时**　|　"
-                 f"前置：`docs/delivery/case_backtest.md`")
+    lines.append(
+        f"> 生成日期：{today}　|　归纳能力模式：**{len(patterns)} 种**　|　"
+        f"覆盖已诊断场景：**{total_scenarios} 个**　|　"
+        f"可落地年省：**{actionable_hours:.0f} 小时**　|　"
+        f"前置：`docs/delivery/case_backtest.md`"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -151,9 +151,11 @@ def render(patterns: list[CapabilityPattern], total_scenarios: int) -> str:
     lines.append("但一次性的项目不是 FDE 的终点 —— 客户真正该买走的，")
     lines.append("是**一套能铺到任何业务线的方法**。")
     lines.append("")
-    lines.append(f"这份矩阵把跨境三表里跑通的 {total_scenarios} 个场景，"
-                 f"归纳成 **{len(patterns)} 种能力模式**。"
-                 "每种模式都标注了：它是什么做法、跨境哪个场景已验证、能复制到哪些业务域。")
+    lines.append(
+        f"这份矩阵把跨境三表里跑通的 {total_scenarios} 个场景，"
+        f"归纳成 **{len(patterns)} 种能力模式**。"
+        "每种模式都标注了：它是什么做法、跨境哪个场景已验证、能复制到哪些业务域。"
+    )
     lines.append("")
     lines.append("**一句话：我交付的不是一个台账，而是一套诊断 + 落地的可复制资产。**")
     lines.append("")
@@ -166,9 +168,7 @@ def render(patterns: list[CapabilityPattern], total_scenarios: int) -> str:
     for p in patterns:
         n = len(p.scenario_names)
         hours = f"{p.total_hours:.0f} h" if p.total_hours > 0 else "—（劝退）"
-        lines.append(
-            f"| **{p.name}** | {p.recipe} | {n} 个 | {hours} | {p.replicate_to} |"
-        )
+        lines.append(f"| **{p.name}** | {p.recipe} | {n} 个 | {hours} | {p.replicate_to} |")
     lines.append("")
 
     # ---- 逐模式展开 ----
@@ -200,28 +200,38 @@ def render(patterns: list[CapabilityPattern], total_scenarios: int) -> str:
     lines.append("| 价值衰减 | 交付即封顶 | 每接入一个新场景，边际成本递减 |")
     lines.append("| 对客户的意义 | 解决一个痛点 | 获得一套能自己往下铺的判断框架 |")
     lines.append("")
-    lines.append(f"四种模式合计覆盖年省 **{grand_hours:.0f} 小时**"
-                 f"（其中可落地 **{actionable_hours:.0f} 小时**，"
-                 "其余为诚实劝退、明确不投）。")
+    lines.append(
+        f"四种模式合计覆盖年省 **{grand_hours:.0f} 小时**"
+        f"（其中可落地 **{actionable_hours:.0f} 小时**，"
+        "其余为诚实劝退、明确不投）。"
+    )
     lines.append("客户接走的不是「做完的事」，而是「知道哪些该做、哪些不该做、怎么做」的能力。")
     lines.append("")
 
     # ---- 收束 ----
     lines.append("## 复制的边界（如实告知）")
     lines.append("")
-    lines.append("- **能力模式可复制，具体判据不可照搬**：库存÷销量的「7 天」是宠物类目的经验值，"
-                 "换类目要重新标定")
-    lines.append("- **AI 草拟模式强依赖数据源**：差评归因能复制，前提是目标业务也有历史文本沉淀；"
-                 "没有就退回「诚实劝退」")
-    lines.append("- **诚实劝退是资产，不是失败**：它让客户在「数据源没就位」的环节不浪费预算 —— "
-                 "这本身就是交付价值")
+    lines.append(
+        "- **能力模式可复制，具体判据不可照搬**：库存÷销量的「7 天」是宠物类目的经验值，"
+        "换类目要重新标定"
+    )
+    lines.append(
+        "- **AI 草拟模式强依赖数据源**：差评归因能复制，前提是目标业务也有历史文本沉淀；"
+        "没有就退回「诚实劝退」"
+    )
+    lines.append(
+        "- **诚实劝退是资产，不是失败**：它让客户在「数据源没就位」的环节不浪费预算 —— "
+        "这本身就是交付价值"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("> 本矩阵由 `scripts/gen_expansion_matrix.py` 自动生成，"
-                 "能力模式由四象限归纳、场景数与年省工时从 `diagnosis.py` 实算，"
-                 "「可复制到」为定性判断。改场景包后重跑 "
-                 "`python scripts/gen_expansion_matrix.py` 即可更新。")
+    lines.append(
+        "> 本矩阵由 `scripts/gen_expansion_matrix.py` 自动生成，"
+        "能力模式由四象限归纳、场景数与年省工时从 `diagnosis.py` 实算，"
+        "「可复制到」为定性判断。改场景包后重跑 "
+        "`python scripts/gen_expansion_matrix.py` 即可更新。"
+    )
     return "\n".join(lines)
 
 

@@ -81,12 +81,8 @@ class BitableClient:
         serializer: WriteSerializer | None = None,
     ) -> None:
         self._owns_client = http_client is None
-        self._http = http_client or httpx.AsyncClient(
-            base_url=OPEN_API_BASE, timeout=30.0
-        )
-        self._token_cache = token_cache or TokenCache(
-            app_id, app_secret, http_client=self._http
-        )
+        self._http = http_client or httpx.AsyncClient(base_url=OPEN_API_BASE, timeout=30.0)
+        self._token_cache = token_cache or TokenCache(app_id, app_secret, http_client=self._http)
         self._limiter = limiter or RateLimiter()
         self._serializer = serializer or WriteSerializer()
 
@@ -134,9 +130,7 @@ class BitableClient:
                 if resp.status_code in RETRYABLE_HTTP_STATUS and attempt < RETRY_MAX_ATTEMPTS:
                     await self._backoff(attempt)
                     continue
-                raise FeishuAPIError(
-                    resp.status_code, resp.text, http_status=resp.status_code
-                )
+                raise FeishuAPIError(resp.status_code, resp.text, http_status=resp.status_code)
 
             data: dict[str, Any] = resp.json()
             code = int(data.get("code", 0))
@@ -175,9 +169,7 @@ class BitableClient:
     # 元信息
     # ------------------------------------------------------------------
 
-    async def list_fields(
-        self, app_token: str, table_id: str
-    ) -> dict[str, int]:
+    async def list_fields(self, app_token: str, table_id: str) -> dict[str, int]:
         """拉取表字段元信息，返回 {字段名: type 编号}。
 
         这是 coerce_record 的 fields_meta 来源。写记录前必须先调它，
@@ -224,12 +216,11 @@ class BitableClient:
         created_ids: list[str] = []
         for start in range(0, len(records), BATCH_CREATE_MAX):
             chunk = records[start : start + BATCH_CREATE_MAX]
-            body_records = [
-                {"fields": coerce_record(meta, rec)} for rec in chunk
-            ]
-            path = BITABLE_RECORDS_PATH.format(
-                app_token=app_token, table_id=table_id
-            ) + "/batch_create"
+            body_records = [{"fields": coerce_record(meta, rec)} for rec in chunk]
+            path = (
+                BITABLE_RECORDS_PATH.format(app_token=app_token, table_id=table_id)
+                + "/batch_create"
+            )
 
             async def op(
                 _path: str = path, _body: list[dict[str, Any]] = body_records
@@ -239,9 +230,7 @@ class BitableClient:
                 )
 
             data = await self._serializer.run(table_id, op)
-            created_ids.extend(
-                str(r["record_id"]) for r in data.get("records", [])
-            )
+            created_ids.extend(str(r["record_id"]) for r in data.get("records", []))
         return {"created": len(created_ids), "record_ids": created_ids}
 
     async def update_records(
@@ -267,9 +256,10 @@ class BitableClient:
                 }
                 for rec in chunk
             ]
-            path = BITABLE_RECORDS_PATH.format(
-                app_token=app_token, table_id=table_id
-            ) + "/batch_update"
+            path = (
+                BITABLE_RECORDS_PATH.format(app_token=app_token, table_id=table_id)
+                + "/batch_update"
+            )
 
             async def op(
                 _path: str = path, _body: list[dict[str, Any]] = body_records
@@ -314,9 +304,7 @@ class BitableClient:
         meta = fields_meta or await self.list_fields(app_token, table_id)
 
         # 查出 key_field 已存在的记录 → {归一化键: record_id}
-        found = await self.search_records(
-            app_token, table_id, field_names=[key_field]
-        )
+        found = await self.search_records(app_token, table_id, field_names=[key_field])
         existing: dict[str, str] = {}
         for item in found:
             k = normalize_key((item.get("fields") or {}).get(key_field))
@@ -338,14 +326,10 @@ class BitableClient:
 
         result: dict[str, Any] = {"created": 0, "updated": 0, "skipped": skipped}
         if to_create:
-            r = await self.create_records(
-                app_token, table_id, to_create, fields_meta=meta
-            )
+            r = await self.create_records(app_token, table_id, to_create, fields_meta=meta)
             result["created"] = r["created"]
         if to_update:
-            r = await self.update_records(
-                app_token, table_id, to_update, fields_meta=meta
-            )
+            r = await self.update_records(app_token, table_id, to_update, fields_meta=meta)
             result["updated"] = r["updated"]
         return result
 
@@ -355,17 +339,13 @@ class BitableClient:
         """批量删除记录。超过 BATCH_DELETE_MAX(500，保守值) 自动分片。"""
         if not record_ids:
             return {"deleted": 0}
-        path = BITABLE_RECORDS_PATH.format(
-            app_token=app_token, table_id=table_id
-        ) + "/batch_delete"
+        path = BITABLE_RECORDS_PATH.format(app_token=app_token, table_id=table_id) + "/batch_delete"
 
         deleted = 0
         for start in range(0, len(record_ids), BATCH_DELETE_MAX):
             chunk = record_ids[start : start + BATCH_DELETE_MAX]
 
-            async def op(
-                _path: str = path, _body: list[str] = chunk
-            ) -> dict[str, Any]:
+            async def op(_path: str = path, _body: list[str] = chunk) -> dict[str, Any]:
                 return await self._request(
                     "POST", _path, bucket=Bucket.WRITE, json_body={"records": _body}
                 )
@@ -389,9 +369,7 @@ class BitableClient:
         max_pages: int = 20,
     ) -> list[dict[str, Any]]:
         """查询记录，自动翻页。max_pages 防止一次调用打爆配额。"""
-        path = BITABLE_RECORDS_PATH.format(
-            app_token=app_token, table_id=table_id
-        ) + "/search"
+        path = BITABLE_RECORDS_PATH.format(app_token=app_token, table_id=table_id) + "/search"
 
         body: dict[str, Any] = {"page_size": min(page_size, SEARCH_MAX_PAGE_SIZE)}
         if filter_:

@@ -48,9 +48,7 @@ PLAN = {
 }
 
 
-async def seed_one(
-    client: BitableClient, name: str, table_id: str
-) -> dict[str, object]:
+async def seed_one(client: BitableClient, name: str, table_id: str) -> dict[str, object]:
     """对一张表执行引擎层 upsert_records 并读回校验。"""
     rows, key_field = PLAN[name]
 
@@ -61,10 +59,7 @@ async def seed_one(
 
     # 读回校验
     after = await client.search_records(CROSS_BORDER_APP, table_id)
-    got_keys = sorted(
-        normalize_key((rec.get("fields") or {}).get(key_field))
-        for rec in after
-    )
+    got_keys = sorted(normalize_key((rec.get("fields") or {}).get(key_field)) for rec in after)
     want_keys = sorted(str(r[key_field]) for r in rows)
     ok = got_keys == want_keys
 
@@ -75,24 +70,18 @@ async def seed_one(
         "total_after": len(after),
         "keys_match": ok,
         "records": [
-            {"record_id": rec["record_id"], "fields": rec.get("fields", {})}
-            for rec in after
+            {"record_id": rec["record_id"], "fields": rec.get("fields", {})} for rec in after
         ],
     }
 
 
-async def check_one(
-    client: BitableClient, name: str, table_id: str
-) -> dict[str, object]:
+async def check_one(client: BitableClient, name: str, table_id: str) -> dict[str, object]:
     """只读回，不写入。"""
     rows = await client.search_records(CROSS_BORDER_APP, table_id)
     return {
         "table": name,
         "total": len(rows),
-        "records": [
-            {"record_id": r["record_id"], "fields": r.get("fields", {})}
-            for r in rows
-        ],
+        "records": [{"record_id": r["record_id"], "fields": r.get("fields", {})} for r in rows],
     }
 
 
@@ -114,9 +103,7 @@ def _write_snapshot(results: list[dict[str, object]]) -> Path:
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--check", action="store_true", help="只读回校验，不写入"
-    )
+    parser.add_argument("--check", action="store_true", help="只读回校验，不写入")
     args = parser.parse_args()
 
     load_dotenv(_env_path())

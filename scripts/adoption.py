@@ -67,22 +67,15 @@ async def compute(args: argparse.Namespace) -> dict[str, object]:
 
     async with BitableClient(app_id, app_secret) as client:
         # ---------- 指标 1：台账覆盖率 ----------
-        items = await client.search_records(
-            args.app, args.table, field_names=[args.key_field]
-        )
-        keys = {
-            normalize_key((it.get("fields") or {}).get(args.key_field))
-            for it in items
-        }
+        items = await client.search_records(args.app, args.table, field_names=[args.key_field])
+        keys = {normalize_key((it.get("fields") or {}).get(args.key_field)) for it in items}
         keys.discard("")
         unique_count = len(keys)
         coverage = {
             "unique_keys": unique_count,
             "baseline": args.baseline,
             "ratio": _pct(unique_count, args.baseline),
-            "healthy": (
-                unique_count / args.baseline > 0.9 if args.baseline else None
-            ),
+            "healthy": (unique_count / args.baseline > 0.9 if args.baseline else None),
         }
 
         # ---------- 指标 2：SLA 逾期率（可选，需配 status/date 字段） ----------
@@ -156,14 +149,10 @@ def render(args: argparse.Namespace, r: dict[str, object]) -> str:
             f"{sla['overdue']}/{sla['total_open']} = {sla['ratio']} | <15% | {sla_mark} |"
         )
     else:
-        lines.append(
-            "| SLA 逾期率 | 未配置 | <15% | ⏭️ 加 --status-field/--date-field 启用 |"
-        )
+        lines.append("| SLA 逾期率 | 未配置 | <15% | ⏭️ 加 --status-field/--date-field 启用 |")
 
     # 采用率
-    lines.append(
-        f"| 采用率 | pending | >70% | ⏭️ {ado['reason']} |"
-    )
+    lines.append(f"| 采用率 | pending | >70% | ⏭️ {ado['reason']} |")
     return "\n".join(lines)
 
 
@@ -172,8 +161,9 @@ async def amain() -> int:
     p.add_argument("--app", required=True, help="多维表格 app_token")
     p.add_argument("--table", required=True, help="数据表 table_id")
     p.add_argument("--key-field", required=True, help="唯一键字段名（如 SKU/订单号）")
-    p.add_argument("--baseline", type=int, default=0,
-                   help="应覆盖的基准条数（客户 ERP 导出的 SKU/订单总数）")
+    p.add_argument(
+        "--baseline", type=int, default=0, help="应覆盖的基准条数（客户 ERP 导出的 SKU/订单总数）"
+    )
     p.add_argument("--status-field", default=None, help="状态字段名（启用 SLA 扫描）")
     p.add_argument("--closed-value", default="已闭环", help="表示已闭环的状态值")
     p.add_argument("--date-field", default=None, help="日期字段名（启用 SLA 扫描）")

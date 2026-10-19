@@ -66,6 +66,7 @@ async def test_create_records_coerces_fields_before_write() -> None:
             return httpx.Response(200, json=_fields_payload())
         if request.url.path.endswith("/batch_create"):
             import json as _json
+
             captured.append(_json.loads(request.content))
             return httpx.Response(
                 200,
@@ -79,13 +80,14 @@ async def test_create_records_coerces_fields_before_write() -> None:
 
     async with _make_client(handler) as client:
         result = await client.create_records(
-            "appTok", "tbl1",
+            "appTok",
+            "tbl1",
             [{"状态": ["正常"], "创建时间": 1674206443, "负责人": "ou_x"}],
         )
 
     assert result["created"] == 1
     fields = captured[0]["records"][0]["fields"]
-    assert fields["状态"] == "正常"          # 数组被压成字符串
+    assert fields["状态"] == "正常"  # 数组被压成字符串
     assert fields["创建时间"] == 1674206443000  # 秒 → 毫秒
     assert fields["负责人"] == [{"id": "ou_x"}]
 
@@ -116,10 +118,9 @@ async def test_same_table_writes_are_serialized() -> None:
     async with _make_client(handler) as client:
         # 用极小节流间隔加速压测
         client._serializer._min_interval = 0.0
-        await asyncio.gather(*[
-            client.create_records("appTok", "tblSame", [{"状态": "正常"}])
-            for _ in range(50)
-        ])
+        await asyncio.gather(
+            *[client.create_records("appTok", "tblSame", [{"状态": "正常"}]) for _ in range(50)]
+        )
 
     assert peak == 1, f"飞书侧观测到的并发应为 1，实测 {peak}"
 
@@ -139,9 +140,8 @@ async def test_fail_fast_error_not_retried() -> None:
             calls["batch_create"] += 1
             # 1254043 NoTablePerm 之类权限错误（取规则表里的一个 FAIL_FAST 码）
             from basepilot.errors import RULES, Action
-            code = next(
-                c for c, r in RULES.items() if r.action is Action.FAIL_FAST
-            )
+
+            code = next(c for c, r in RULES.items() if r.action is Action.FAIL_FAST)
             return httpx.Response(200, json={"code": code, "msg": "no permission", "data": {}})
         return httpx.Response(500, json={"code": 500, "msg": "?"})
 
@@ -168,9 +168,8 @@ async def test_retryable_error_retries_then_succeeds() -> None:
             if attempts["n"] < 3:
                 # 前两次返回可重试的系统忙错误
                 from basepilot.errors import RULES, Action
-                code = next(
-                    c for c, r in RULES.items() if r.action is Action.RETRY
-                )
+
+                code = next(c for c, r in RULES.items() if r.action is Action.RETRY)
                 return httpx.Response(200, json={"code": code, "msg": "busy", "data": {}})
             return httpx.Response(
                 200,
@@ -216,9 +215,7 @@ async def test_token_cached_across_requests() -> None:
         for _ in range(100):
             await client.search_records("appTok", "tbl1")
 
-    assert token_fetches["n"] == 1, (
-        f"100 次业务请求应只换 1 次 token，实测 {token_fetches['n']}"
-    )
+    assert token_fetches["n"] == 1, f"100 次业务请求应只换 1 次 token，实测 {token_fetches['n']}"
 
 
 @pytest.mark.asyncio
@@ -268,6 +265,7 @@ async def test_batch_create_splits_over_limit() -> None:
         if request.url.path.endswith("/batch_create"):
             batches["n"] += 1
             import json as _json
+
             body = _json.loads(request.content)
             return httpx.Response(
                 200,
@@ -275,9 +273,7 @@ async def test_batch_create_splits_over_limit() -> None:
                     "code": 0,
                     "msg": "ok",
                     "data": {
-                        "records": [
-                            {"record_id": f"r{i}"} for i in range(len(body["records"]))
-                        ]
+                        "records": [{"record_id": f"r{i}"} for i in range(len(body["records"]))]
                     },
                 },
             )

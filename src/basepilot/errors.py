@@ -58,8 +58,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.RETRY,
         title="TooManyRequest（频率超限）",
         guidance=(
-            "触发了接口频率限制。BasePilot 已自动退避重试；"
-            "若持续出现，请降低并发或调大节流间隔。"
+            "触发了接口频率限制。BasePilot 已自动退避重试；若持续出现，请降低并发或调大节流间隔。"
         ),
         keywords=("频率", "退避"),
     ),
@@ -78,10 +77,7 @@ RULES: dict[int, ErrorRule] = {
         code=1254607,
         action=Action.RETRY,
         title="Data not ready（数据未就绪）",
-        guidance=(
-            "多维表格底层按版本维度串行处理，不支持并发。"
-            "BasePilot 会退避后重试，请稍候。"
-        ),
+        guidance=("多维表格底层按版本维度串行处理，不支持并发。BasePilot 会退避后重试，请稍候。"),
         keywords=("就绪", "退避"),
     ),
     1255040: ErrorRule(
@@ -118,8 +114,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="Invalid client token（幂等键格式非法）",
         guidance=(
-            "client_token 必须是 uuidv4 格式。"
-            "这通常来自调用方手动传参，请改用默认生成的幂等键。"
+            "client_token 必须是 uuidv4 格式。这通常来自调用方手动传参，请改用默认生成的幂等键。"
         ),
         keywords=("uuidv4",),
     ),
@@ -183,10 +178,7 @@ RULES: dict[int, ErrorRule] = {
         code=1254004,
         action=Action.FAIL_FAST,
         title="WrongTableId（table_id 错误）",
-        guidance=(
-            "table_id 不正确。可从多维表格 URL 直接取，"
-            "或调用「列出数据表」接口重新获取。"
-        ),
+        guidance=("table_id 不正确。可从多维表格 URL 直接取，或调用「列出数据表」接口重新获取。"),
         keywords=("table_id", "列出数据表"),
     ),
     1254041: ErrorRule(
@@ -228,8 +220,8 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="TextFieldConvFail（文本字段格式错误）",
         guidance=(
-            "文本字段写入时要求**纯字符串**，例如 \"断货预警\"。"
-            "⚠️ 实测踩坑：不要传 [{\"type\":\"text\",\"text\":...}] 富文本数组——"
+            '文本字段写入时要求**纯字符串**，例如 "断货预警"。'
+            '⚠️ 实测踩坑：不要传 [{"type":"text","text":...}] 富文本数组——'
             "那是**读取**时飞书返回的结构，写入传它会报本错误。"
             "「读结构 ≠ 写结构」是文本字段最易踩的坑。"
         ),
@@ -240,8 +232,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="SingleSelectFieldConvFail（单选字段格式错误）",
         guidance=(
-            "单选字段要求传**字符串**，例如 \"选项A\"，"
-            "而不是数组 [\"选项A\"]。这是最常见的错误。"
+            '单选字段要求传**字符串**，例如 "选项A"，而不是数组 ["选项A"]。这是最常见的错误。'
         ),
         keywords=("字符串", "数组"),
     ),
@@ -249,7 +240,7 @@ RULES: dict[int, ErrorRule] = {
         code=1254063,
         action=Action.FAIL_FAST,
         title="MultiSelectFieldConvFail（多选字段格式错误）",
-        guidance="多选字段要求传字符串数组，例如 [\"选项A\", \"选项B\"]。",
+        guidance='多选字段要求传字符串数组，例如 ["选项A", "选项B"]。',
         keywords=("数组",),
     ),
     1254064: ErrorRule(
@@ -257,8 +248,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="DatetimeFieldConvFail（日期字段格式错误）",
         guidance=(
-            "日期字段要求传 **13 位毫秒时间戳**"
-            "（例如 1674206443000），不是秒、也不是日期字符串。"
+            "日期字段要求传 **13 位毫秒时间戳**（例如 1674206443000），不是秒、也不是日期字符串。"
         ),
         keywords=("毫秒", "时间戳"),
     ),
@@ -274,7 +264,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="UserFieldConvFail（人员字段格式错误）",
         guidance=(
-            "人员字段要求传数组对象 [{\"id\": \"ou_xxx\"}]，"
+            '人员字段要求传数组对象 [{"id": "ou_xxx"}]，'
             "且**只支持 id 参数**。传字符串或 name 都会失败。"
             "传 null 可清空该字段。"
         ),
@@ -284,7 +274,7 @@ RULES: dict[int, ErrorRule] = {
         code=1254068,
         action=Action.FAIL_FAST,
         title="URLFieldConvFail（超链接字段格式错误）",
-        guidance="超链接字段要求传 {\"link\": \"...\", \"text\": \"...\"} 对象。",
+        guidance='超链接字段要求传 {"link": "...", "text": "..."} 对象。',
         keywords=("link", "text"),
     ),
     1254069: ErrorRule(
@@ -294,7 +284,7 @@ RULES: dict[int, ErrorRule] = {
         guidance=(
             "附件字段不能直接传本地路径或外部 URL。"
             "必须先调drive/v1/medias/upload_all 上传拿到 file_token，"
-            "再传 [{\"file_token\": \"...\"}]。"
+            '再传 [{"file_token": "..."}]。'
         ),
         keywords=("file_token", "上传"),
     ),
@@ -303,8 +293,7 @@ RULES: dict[int, ErrorRule] = {
         action=Action.FAIL_FAST,
         title="AttachPermNotAllow（附件权限不足）",
         guidance=(
-            "上传附件的接口要求应用对该多维表格有管理权限。"
-            "请确认已通过「添加文档应用」完成授权。"
+            "上传附件的接口要求应用对该多维表格有管理权限。请确认已通过「添加文档应用」完成授权。"
         ),
         keywords=("权限", "授权"),
     ),
@@ -314,7 +303,7 @@ RULES: dict[int, ErrorRule] = {
         title="关联字段参数无效",
         guidance=(
             "关联字段（SingleLink / DuplexLink）要求传**字符串数组**"
-            "（record_id 的数组），例如 [\"recXXX\", \"recYYY\"]。"
+            '（record_id 的数组），例如 ["recXXX", "recYYY"]。'
         ),
         keywords=("字符串数组", "record_id"),
     ),

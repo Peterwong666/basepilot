@@ -103,9 +103,7 @@ class RateLimiter:
         self._buckets: dict[Bucket, _TokenBucket] = {}
         for bucket, rate in qps_map.items():
             cap = float(burst if burst is not None else rate)
-            self._buckets[bucket] = _TokenBucket(
-                rate=float(rate), capacity=cap, clock=clock
-            )
+            self._buckets[bucket] = _TokenBucket(rate=float(rate), capacity=cap, clock=clock)
 
     async def acquire(self, bucket: Bucket, amount: float = 1.0) -> float:
         """获取令牌，返回实际等待秒数（0 表示无需等待）。

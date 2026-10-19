@@ -32,8 +32,15 @@ _FORBIDDEN_PATTERNS: tuple[tuple[str, str], ...] = (
 )
 
 #: 这些目录不参与扫描（第三方/缓存，内容不由本项目控制）
-_SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".mypy_cache",
-              ".ruff_cache", ".pytest_cache"}
+_SKIP_DIRS = {
+    ".git",
+    ".venv",
+    "node_modules",
+    "__pycache__",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+}
 
 #: 本文件自身不扫描 —— 它是**规则定义处**，里面必然写着命中形态的示例
 #: （如 `tbl` + 12 位以上的示例串）。规则文件不是数据文件。

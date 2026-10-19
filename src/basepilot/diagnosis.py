@@ -169,8 +169,7 @@ class Scenario:
             raise DiagnosisError(f"{self.id}: runs_per_year 不能为负")
         if self.hard_reject is not None and self.hard_reject not in HARD_REJECT:
             raise DiagnosisError(
-                f"{self.id}: 未知 hard_reject {self.hard_reject!r}，"
-                f"合法值 {sorted(HARD_REJECT)}"
+                f"{self.id}: 未知 hard_reject {self.hard_reject!r}，合法值 {sorted(HARD_REJECT)}"
             )
 
     # -- 评分 ----------------------------------------------------------
@@ -337,8 +336,7 @@ def render_markdown(results: list[Diagnosis]) -> str:
     lines.append("# 业务诊断报告：哪个环节值得上 AI")
     lines.append("")
     lines.append(
-        f"评估 **{len(results)} 个业务环节**。"
-        "判断标准：高频、规则明确、有数据、错得起、避损失。"
+        f"评估 **{len(results)} 个业务环节**。判断标准：高频、规则明确、有数据、错得起、避损失。"
     )
     lines.append("")
     lines.append(
@@ -372,9 +370,7 @@ def render_markdown(results: list[Diagnosis]) -> str:
                 lines.append(f"- **落地形态**：{d.strategy}")
             lines.append(
                 "- **五维打分**："
-                + "、".join(
-                    f"{DIMENSION_LABEL[k]} {v}" for k, v in d.scenario.dimensions.items()
-                )
+                + "、".join(f"{DIMENSION_LABEL[k]} {v}" for k, v in d.scenario.dimensions.items())
             )
             lines.append(
                 f"- **当前成本**：{d.scenario.human_minutes_per_run:.0f} 分钟/次 × "
@@ -443,9 +439,7 @@ def render_json(results: list[Diagnosis]) -> str:
                 "auto": THRESHOLD_AUTO,
                 "assisted": THRESHOLD_ASSISTED,
             },
-            "total_annual_hours_saved": round(
-                sum(d.annual_hours_saved for d in results), 1
-            ),
+            "total_annual_hours_saved": round(sum(d.annual_hours_saved for d in results), 1),
             "results": [d.to_dict() for d in results],
         },
         ensure_ascii=False,

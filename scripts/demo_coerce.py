@@ -70,7 +70,7 @@ def main() -> int:
         print(_line("负责人", '"张三"', f"拒绝 → {first}"))
     print("    （姓名不是合法标识，fail-fast 比静默写错值更安全 —— 出口严格）")
     print()
-    print("4) 勾选字段传了字符串 \"true\"")
+    print('4) 勾选字段传了字符串 "true"')
     print(_line("是否加急", "true", coerce_checkbox("是否加急", FieldType.CHECKBOX, "true")))
     print()
     print("结果：上面四种输入，如果直接调飞书 API 会分别报")

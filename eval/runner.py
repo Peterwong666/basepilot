@@ -52,8 +52,7 @@ class EvalReport:
     def to_markdown(self) -> str:
         """生成证据卡Markdown，供 gen_evidence.py 写入 README。"""
         rows = [
-            ("黄金用例通过率",
-             f"{self.golden_cases_passed}/{self.golden_cases_total}"),
+            ("黄金用例通过率", f"{self.golden_cases_passed}/{self.golden_cases_total}"),
             ("字段编码正确率", f"{self.field_encoding_accuracy:.0%}"),
             ("不安全写入拦截率", f"{self.unsafe_write_rejection_rate:.0%}"),
             ("错误码策略覆盖", f"{self.error_code_coverage}/{self.error_code_total_rules}"),
@@ -123,11 +122,7 @@ def _measure_field_encoding() -> tuple[int, int, float, float]:
             passed += 1
 
     # 不可写拦截率：所有系统只读类型都必须 fail-fast
-    rejected = sum(
-        1
-        for ftype in SYSTEM_READONLY_TYPES
-        if _raises_coerce_error(ftype.value)
-    )
+    rejected = sum(1 for ftype in SYSTEM_READONLY_TYPES if _raises_coerce_error(ftype.value))
     rejection_rate = rejected / len(SYSTEM_READONLY_TYPES) if SYSTEM_READONLY_TYPES else 0.0
 
     return passed, total, passed / total if total else 0.0, rejection_rate
@@ -255,15 +250,15 @@ def _measure_max_inflight(concurrency: int = 200) -> int:
 
     async def run() -> int:
         transport = httpx.MockTransport(handler)
-        http = httpx.AsyncClient(
-            transport=transport, base_url="https://open.feishu.cn/open-apis"
-        )
+        http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
         async with BitableClient("cli_x", "secret_x", http_client=http) as client:
             client._serializer._min_interval = 0.0
-            await asyncio.gather(*[
-                client.create_records("appTok", "tblSame", [{"状态": "正常"}])
-                for _ in range(concurrency)
-            ])
+            await asyncio.gather(
+                *[
+                    client.create_records("appTok", "tblSame", [{"状态": "正常"}])
+                    for _ in range(concurrency)
+                ]
+            )
         return peak
 
     return asyncio.run(run())
@@ -298,9 +293,7 @@ def _measure_retry_success_rate(attempts: int = 50) -> float:
             if request.url.path.endswith("/batch_create"):
                 calls["n"] += 1
                 if calls["n"] < 3:
-                    return httpx.Response(
-                        200, json={"code": retry_code, "msg": "busy", "data": {}}
-                    )
+                    return httpx.Response(200, json={"code": retry_code, "msg": "busy", "data": {}})
                 return httpx.Response(
                     200,
                     json={"code": 0, "msg": "ok", "data": {"records": [{"record_id": "r"}]}},
@@ -377,9 +370,7 @@ def _measure_dryrun_prediction_accuracy() -> float:
 
     async def run() -> float:
         transport = httpx.MockTransport(handler)
-        http = httpx.AsyncClient(
-            transport=transport, base_url="https://open.feishu.cn/open-apis"
-        )
+        http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
         async with BitableClient("cli_x", "secret_x", http_client=http) as client:
             client._serializer._min_interval = 0.0
 
@@ -388,11 +379,7 @@ def _measure_dryrun_prediction_accuracy() -> float:
             predicted_ok = prediction["ok"]
 
             # 2. 真实执行（只对预测能成功的那些 —— dry_run 的价值就是先筛掉坏记录）
-            good_records = [
-                records[i]
-                for i, r in enumerate(prediction["records"])
-                if r["ok"]
-            ]
+            good_records = [records[i] for i, r in enumerate(prediction["records"]) if r["ok"]]
             actual = await client.create_records("appTok", "tbl1", good_records)
             actual_ok = actual["created"]
 

@@ -63,9 +63,7 @@ def _build() -> tuple:
         return httpx.Response(500, json={"code": 500, "msg": "unexpected " + request.url.path})
 
     transport = httpx.MockTransport(handler)
-    http = httpx.AsyncClient(
-        transport=transport, base_url="https://open.feishu.cn/open-apis"
-    )
+    http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
     client = BitableClient("cli_x", "secret_x", http_client=http)
     server = build_server(client)
     return server, client, write_calls
@@ -94,9 +92,7 @@ async def test_tools_discoverable() -> None:
 async def test_call_describe_table() -> None:
     """describe_table 返回字段结构含 type 与可读名。"""
     server, client, _ = _build()
-    result = await server.call_tool(
-        "describe_table", {"app_token": "app", "table_id": "tbl"}
-    )
+    result = await server.call_tool("describe_table", {"app_token": "app", "table_id": "tbl"})
     # fastmcp 把 dict 结果包成结构化内容
     data = result.structured_content
     assert data["field_count"] == 3
@@ -140,8 +136,8 @@ async def test_dry_run_reports_field_errors() -> None:
             "app_token": "app",
             "table_id": "tbl",
             "records": [
-                {"状态": "正常"},                # 合法
-                {"状态": ["正常", "异常"]},        # 单选传数组 → 失败
+                {"状态": "正常"},  # 合法
+                {"状态": ["正常", "异常"]},  # 单选传数组 → 失败
             ],
         },
     )

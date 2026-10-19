@@ -100,9 +100,7 @@ _FIELDS = {
 
 def _make_client(handler) -> BitableClient:
     transport = httpx.MockTransport(handler)
-    http = httpx.AsyncClient(
-        transport=transport, base_url="https://open.feishu.cn/open-apis"
-    )
+    http = httpx.AsyncClient(transport=transport, base_url="https://open.feishu.cn/open-apis")
     return BitableClient("cli_x", "secret_x", http_client=http)
 
 
@@ -132,9 +130,7 @@ async def test_upsert_existing_richtext_key_goes_update_not_create() -> None:
                         "items": [
                             {
                                 "record_id": "recEXISTING",
-                                "fields": {
-                                    "SKU": [{"type": "text", "text": "PET-BOWL-001"}]
-                                },
+                                "fields": {"SKU": [{"type": "text", "text": "PET-BOWL-001"}]},
                             }
                         ],
                     },
@@ -200,9 +196,7 @@ async def test_upsert_new_key_goes_create() -> None:
         if request.url.path.endswith("/batch_create"):
             body = json.loads(request.content)
             calls["create"].append(body)
-            new_records = [
-                {"record_id": f"recNew{i}"} for i in range(len(body["records"]))
-            ]
+            new_records = [{"record_id": f"recNew{i}"} for i in range(len(body["records"]))]
             return httpx.Response(
                 200,
                 json={"code": 0, "msg": "ok", "data": {"records": new_records}},
@@ -226,9 +220,9 @@ async def test_upsert_new_key_goes_create() -> None:
             "appTok",
             "tbl1",
             [
-                {"SKU": "SKU-A", "FBA库存": 10},   # 已存在 → update
-                {"SKU": "SKU-B", "FBA库存": 20},   # 新 → create
-                {"FBA库存": 999},                   # 缺键 → skipped
+                {"SKU": "SKU-A", "FBA库存": 10},  # 已存在 → update
+                {"SKU": "SKU-B", "FBA库存": 20},  # 新 → create
+                {"FBA库存": 999},  # 缺键 → skipped
             ],
             "SKU",
         )
@@ -243,6 +237,7 @@ async def test_upsert_new_key_goes_create() -> None:
 @pytest.mark.asyncio
 async def test_upsert_empty_records_short_circuit() -> None:
     """空列表不发任何请求。"""
+
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(500, json={"code": 500, "msg": "不应被调用"})
 

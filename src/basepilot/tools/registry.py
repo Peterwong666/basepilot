@@ -120,9 +120,7 @@ def build_server(client: BitableClient | None = None) -> FastMCP:
             field_names: 只返回这些字段。
             page_size: 每页条数，最大 500。
         """
-        return await atomic.search_records(
-            c, app_token, table_id, filter_, field_names, page_size
-        )
+        return await atomic.search_records(c, app_token, table_id, filter_, field_names, page_size)
 
     @mcp.tool
     async def batch_upsert(
