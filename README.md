@@ -189,11 +189,34 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 
 ---
 
+## 远程模式（HTTP / SSE）
+
+默认 `serve` 走 stdio，供 Claude Code / Cursor 本地接入 —— 凭证留在本机环境变量，
+这是推荐用法。需要把 Server 部署到服务器、供多人或多客户端远程接入时，
+用 HTTP 传输（FastMCP 4.x，streamable-http）：
+
+```bash
+basepilot-mcp serve --transport http --host 127.0.0.1 --port 8000
+# 客户端接入 http://127.0.0.1:8000/mcp/
+
+basepilot-mcp serve --transport sse --port 8000        # 旧版 SSE 协议，挂载 /sse/
+basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
+```
+
+- `--host` 默认 `127.0.0.1`（仅本机）；`--port` 默认 8000；`--path` 默认用 FastMCP 内置路径。
+- **鉴权注意**：MCP 层没有内置鉴权 —— 能连上端口就能调用全部写工具，
+  等同于你的飞书 app 权限。**不要把端口直接绑 `0.0.0.0` 暴露公网**：
+  请放内网，或在前面加带鉴权的反向代理（nginx / Caddy + Bearer Token / mTLS）。
+- 飞书凭证只存在**服务端**环境变量（`BASEPILOT_APP_ID` / `BASEPILOT_APP_SECRET`），
+  不经过客户端与网络传输。
+
+---
+
 ## 当前进度
 
 **全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
 （`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-`make verify` 离线全绿（**300 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
+`make verify` 离线全绿（**304 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
 鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
 第二次全更新无重复）。
 
@@ -205,7 +228,7 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 | 接口分桶限流（`ratelimit.py`） | ✅ 已完成 |
 | 字段编码适配（`coerce.py`） | ✅ 已完成，13 类编码器 + `normalize_key` 解码 |
 | 客户端与并发控制（`client.py` / `serialization.py`） | ✅ 已完成，200 压测单表并发=1 |
-| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio 可跑） |
+| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio / HTTP / SSE 可跑） |
 | 业务诊断打分器（`diagnosis.py`） | ✅ 已完成，15 场景四象限 |
 | cassette 录制/重放（`cassette.py`） | ✅ 已完成，真实交互 CI 可重放 |
 | 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
