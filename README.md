@@ -6,8 +6,6 @@
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/tests.json)](.github/badges/tests.json)
-[![eval](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/eval.json)](eval/reports/eval_report.json)
 
 **[English](#english-readme) · 简体中文**
 
@@ -170,14 +168,14 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 | `dry_run_create` | **预演**：跑完整编码链路但零真实写请求 |
 | `diagnose_scenarios` | 业务诊断：判断哪些环节值得上 AI |
 
-接入 Claude Code：
+接入 Claude Code（免克隆，经 [uvx](https://docs.astral.sh/uv/) 直接从 PyPI 运行）：
 
 ```json
 {
   "mcpServers": {
     "basepilot": {
-      "command": "basepilot-mcp",
-      "args": ["serve"],
+      "command": "uvx",
+      "args": ["basepilot", "serve"],
       "env": {
         "BASEPILOT_APP_ID": "cli_xxx",
         "BASEPILOT_APP_SECRET": "xxx",
@@ -191,34 +189,11 @@ upsert 唯一键提取必须归一化，否则「已存在」判为「不存在�
 
 ---
 
-## 远程模式（HTTP / SSE）
-
-默认 `serve` 走 stdio，供 Claude Code / Cursor 本地接入 —— 凭证留在本机环境变量，
-这是推荐用法。需要把 Server 部署到服务器、供多人或多客户端远程接入时，
-用 HTTP 传输（FastMCP 4.x，streamable-http）：
-
-```bash
-basepilot-mcp serve --transport http --host 127.0.0.1 --port 8000
-# 客户端接入 http://127.0.0.1:8000/mcp/
-
-basepilot-mcp serve --transport sse --port 8000        # 旧版 SSE 协议，挂载 /sse/
-basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
-```
-
-- `--host` 默认 `127.0.0.1`（仅本机）；`--port` 默认 8000；`--path` 默认用 FastMCP 内置路径。
-- **鉴权注意**：MCP 层没有内置鉴权 —— 能连上端口就能调用全部写工具，
-  等同于你的飞书 app 权限。**不要把端口直接绑 `0.0.0.0` 暴露公网**：
-  请放内网，或在前面加带鉴权的反向代理（nginx / Caddy + Bearer Token / mTLS）。
-- 飞书凭证只存在**服务端**环境变量（`BASEPILOT_APP_ID` / `BASEPILOT_APP_SECRET`），
-  不经过客户端与网络传输。
-
----
-
 ## 当前进度
 
 **全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
 （`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-`make verify` 离线全绿（**309 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
+`make verify` 离线全绿（**297 tests**）；`make live-smoke` 连真实飞书跑通
 鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
 第二次全更新无重复）。
 
@@ -230,45 +205,24 @@ basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
 | 接口分桶限流（`ratelimit.py`） | ✅ 已完成 |
 | 字段编码适配（`coerce.py`） | ✅ 已完成，13 类编码器 + `normalize_key` 解码 |
 | 客户端与并发控制（`client.py` / `serialization.py`） | ✅ 已完成，200 压测单表并发=1 |
-| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio / HTTP / SSE 可跑） |
+| MCP 工具层（**8 个工具**） | ✅ 已完成（FastMCP，stdio 可跑） |
 | 业务诊断打分器（`diagnosis.py`） | ✅ 已完成，15 场景四象限 |
 | cassette 录制/重放（`cassette.py`） | ✅ 已完成，真实交互 CI 可重放 |
 | 跨境三表场景包（`src/basepilot/scenarios/cross_border/__init__.py`） | ✅ 已完成，真实租户幂等验证 |
 | 交付文档（playbook/training/troubleshooting/weekly_ops） | ✅ 已完成，排障 SOP 由代码生成 |
 
-判断进度的方式：`basepilot-mcp doctor`（如实列出已实现项）。
+判断进度的方式：`uvx basepilot doctor`（如实列出已实现项）。
 
 ---
 
 ## 快速开始
-
-### 第 1 步：凭证从哪来
-
-1. 登录 [飞书开放平台](https://open.feishu.cn/app) →「创建企业自建应用」，
-   拿到 **App ID**（`cli_` 开头）与 **App Secret**
-   （[官方指引](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)）。
-2. 在应用后台「权限管理」开通多维表格权限（`bitable:app`），然后创建版本并发布。
-3. 把凭证配进环境变量，跑**凭证引导向导** —— 它会真实调飞书 OpenAPI
-   验证凭证连通性、验证你的 `app_token` / `table_id` 可达，
-   最后输出可直接粘贴的 `mcpServers` 配置（uvx 与本地开发两份）：
-
-```bash
-export BASEPILOT_APP_ID=cli_xxx
-export BASEPILOT_APP_SECRET=xxx
-basepilot-mcp init         # 三步引导：验证凭证 → 验证数据表 → 输出 mcpServers JSON
-```
-
-非交互环境（CI / 管道）里向导不会干等输入：检测到非 TTY 会打印
-完整的环境变量配置指引后以退出码 2 退出。
-
-### 第 2 步：跑起来
 
 ```bash
 git clone https://github.com/Peterwong666/basepilot.git
 cd basepilot
 uv sync                    # 或 make setup
 
-cp .env.example .env       # 填入你的飞书应用凭证（或直接沿用上面的 export）
+cp .env.example .env       # 填入你的飞书应用凭证
 
 make verify                # 离线全量校验：lint + 类型 + 测试 + 评测 + 文档校验
 make eval                  # 实算评测指标（并发峰值/重试成功率/dry-run 一致率）
