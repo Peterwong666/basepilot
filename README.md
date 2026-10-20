@@ -6,7 +6,7 @@
 > Claude Code / Cursor 可**安全读写**的业务台账。
 
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/basepilot.svg)](https://pypi.org/project/basepilot/)
+[![PyPI](https://img.shields.io/badge/pypi-v0.1.1-blue.svg)](https://pypi.org/project/basepilot/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/tests.json)](.github/badges/tests.json)
