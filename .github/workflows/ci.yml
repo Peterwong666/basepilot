@@ -54,6 +54,11 @@ jobs:
       - name: 文档与代码漂移校验
         run: uv run python scripts/gen_troubleshooting.py --check
 
+      # 硬门禁 3：README 首屏徽章数字与实算零漂移
+      # 防止加测试/改 eval 后忘记重跑 make badges，首屏展示过期数字
+      - name: 徽章与实算漂移校验
+        run: uv run python scripts/gen_badges.py --check
+
       - name: CLI 入口自检（装包后不能 ImportError）
         run: uv run basepilot-mcp doctor
 

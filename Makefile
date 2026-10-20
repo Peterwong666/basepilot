@@ -1,4 +1,4 @@
-.PHONY: help verify lint format-check fmt typecheck test eval live-smoke clean evidence docs docs-check troubleshoot diagnose adoption
+.PHONY: help verify lint format-check fmt typecheck test eval live-smoke clean evidence docs docs-check badges troubleshoot diagnose adoption
 
 # 直接用 .venv 里的二进制，不走 `uv run`：
 #  1. mypy 2.x 直接 spawn 会失败，`python -m` 更稳
@@ -20,6 +20,7 @@ help:
 	@echo "  make eval        评测：指标由代码实算，未实现项标 pending"
 	@echo "  make docs        从代码生成排障 SOP"
 	@echo "  make docs-check  校验文档链接与代码零漂移（CI 门禁）"
+	@echo "  make badges      实算重新生成 .github/badges/（tests 数 / eval 指标徽章）"
 	@echo "  make troubleshoot 打印错误码处置速查（离线）"
 	@echo "  make evidence    生成证据卡数字"
 	@echo "  make adoption    促活三指标（覆盖率/SLA逾期率/采用率），出 Markdown 周报片段"
@@ -66,6 +67,10 @@ docs:
 docs-check:
 	@$(PY) scripts/check_doc_links.py
 	@$(PY) scripts/gen_troubleshooting.py --check
+	@$(PY) scripts/gen_badges.py --check
+
+badges:
+	@$(PY) scripts/gen_badges.py
 
 troubleshoot:
 	@.venv/bin/basepilot-mcp troubleshooting

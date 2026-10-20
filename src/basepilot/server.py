@@ -3,6 +3,7 @@
 CLI 子命令：
 - `basepilot-mcp serve`         启动 MCP Server（默认 stdio，供 Claude Code/Cursor 接入；
   `--transport http/sse` 用于远程部署）
+- `basepilot-mcp init`          凭证引导：交互式验证凭证与 table_id，生成 mcpServers 配置
 - `basepilot-mcp doctor`        环境自检：当前能力与配置
 - `basepilot-mcp troubleshooting` 错误码处置速查（离线）
 """
@@ -98,6 +99,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("doctor", help="环境自检：当前能力与待实现项")
     sub.add_parser("troubleshooting", help="打印错误码处置速查")
+    sub.add_parser(
+        "init",
+        help="凭证引导：交互式验证 app_id/app_secret 与 table_id，生成 mcpServers 配置",
+    )
     serve = sub.add_parser(
         "serve",
         help="启动 MCP Server（默认 stdio，供 Claude Code/Cursor 接入）",
@@ -129,6 +134,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "doctor":
         return _cmd_doctor()
+    if args.command == "init":
+        from .init_wizard import run_wizard
+
+        return run_wizard()
     if args.command == "troubleshooting":
         return _cmd_troubleshooting()
     if args.command == "serve":

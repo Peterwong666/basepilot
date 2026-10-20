@@ -6,6 +6,8 @@
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/tests.json)](.github/badges/tests.json)
+[![eval](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/eval.json)](eval/reports/eval_report.json)
 
 **[English](#english-readme) · 简体中文**
 
@@ -216,7 +218,7 @@ basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
 
 **全部模块已完成，已在真实飞书租户跑通全链路。** 每个指标都由代码实算
 （`make eval`），未实测的不会写成已达成 —— 这是本项目的铁律。
-`make verify` 离线全绿（**304 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
+`make verify` 离线全绿（**309 tests**，含门禁脚本自身 3 个测试）；`make live-smoke` 连真实飞书跑通
 鉴权→建表→写入→读回→清理；跨境三表 `batch_upsert` 幂等（第一次全新增，
 第二次全更新无重复）。
 
@@ -240,12 +242,33 @@ basepilot-mcp serve --transport http --path /custom    # 自定义挂载路径
 
 ## 快速开始
 
+### 第 1 步：凭证从哪来
+
+1. 登录 [飞书开放平台](https://open.feishu.cn/app) →「创建企业自建应用」，
+   拿到 **App ID**（`cli_` 开头）与 **App Secret**
+   （[官方指引](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)）。
+2. 在应用后台「权限管理」开通多维表格权限（`bitable:app`），然后创建版本并发布。
+3. 把凭证配进环境变量，跑**凭证引导向导** —— 它会真实调飞书 OpenAPI
+   验证凭证连通性、验证你的 `app_token` / `table_id` 可达，
+   最后输出可直接粘贴的 `mcpServers` 配置（uvx 与本地开发两份）：
+
+```bash
+export BASEPILOT_APP_ID=cli_xxx
+export BASEPILOT_APP_SECRET=xxx
+basepilot-mcp init         # 三步引导：验证凭证 → 验证数据表 → 输出 mcpServers JSON
+```
+
+非交互环境（CI / 管道）里向导不会干等输入：检测到非 TTY 会打印
+完整的环境变量配置指引后以退出码 2 退出。
+
+### 第 2 步：跑起来
+
 ```bash
 git clone https://github.com/Peterwong666/basepilot.git
 cd basepilot
 uv sync                    # 或 make setup
 
-cp .env.example .env       # 填入你的飞书应用凭证
+cp .env.example .env       # 填入你的飞书应用凭证（或直接沿用上面的 export）
 
 make verify                # 离线全量校验：lint + 类型 + 测试 + 评测 + 文档校验
 make eval                  # 实算评测指标（并发峰值/重试成功率/dry-run 一致率）
