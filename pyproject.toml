@@ -1,6 +1,6 @@
 [project]
 name = "basepilot"
-version = "0.1.0"
+version = "0.1.1"
 description = "面向企业交付的飞书多维表格 MCP Server —— 让 Claude Code / Cursor 安全读写业务台账"
 readme = "README.md"
 requires-python = ">=3.11"

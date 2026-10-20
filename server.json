@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Peterwong666/basepilot",
+  "description": "面向企业交付的飞书多维表格 MCP Server —— 让 Claude Code / Cursor 安全读写业务台账",
+  "repository": {
+    "url": "https://github.com/Peterwong666/basepilot",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "basepilot",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "BASEPILOT_APP_ID",
+          "description": "飞书开放平台企业自建应用的 App ID（cli_ 开头）",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "BASEPILOT_APP_SECRET",
+          "description": "飞书开放平台企业自建应用的 App Secret",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
