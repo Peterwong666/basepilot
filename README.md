@@ -6,7 +6,7 @@
 > Claude Code / Cursor 可**安全读写**的业务台账。
 
 [![CI](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Peterwong666/basepilot/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/badge/pypi-v0.1.1-blue.svg)](https://pypi.org/project/basepilot/)
+[![PyPI](https://img.shields.io/badge/pypi-v0.1.2-blue.svg)](https://pypi.org/project/basepilot/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Peterwong666/basepilot/main/.github/badges/tests.json)](.github/badges/tests.json)
@@ -19,7 +19,7 @@
 ## 先试一次飞书写入预演
 
 ```bash
-uvx --from git+https://github.com/Peterwong666/basepilot.git basepilot demo
+uvx basepilot@0.1.2 demo
 ```
 
 示例会把单选数组、秒级时间戳、人员 ID 和字符串布尔值转换为飞书字段格式。输出含原始输入和编码结果，`would_write: false`。只需安装 uv，无需飞书凭证。
@@ -401,7 +401,7 @@ read and write**.
 
 ### First run
 
-Run `uvx --from git+https://github.com/Peterwong666/basepilot.git basepilot demo` to preview one sample record without Feishu credentials. The JSON includes the original input, Feishu-ready values and `would_write: false`.
+Run `uvx basepilot@0.1.2 demo` to preview one sample record without Feishu credentials. The JSON includes the original input, Feishu-ready values and `would_write: false`.
 
 For a real table, use `uvx basepilot init` to generate client configuration. Use a dedicated test table with text `SKU` and numeric `Stock` fields. In Claude Code or Cursor, call `describe_table`, preview one record with `dry_run_create`, then call `batch_upsert` with `SKU` as the key. Run it again with the same SKU and an updated stock value and check that a single row has the new value.
 
