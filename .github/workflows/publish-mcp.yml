@@ -1,0 +1,33 @@
+name: Publish to MCP Registry
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Publish to PyPI"]
+    types: [completed]
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - name: Download the official MCP publisher
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/modelcontextprotocol/registry/releases/download/v1.8.9/mcp-publisher_linux_amd64.tar.gz \
+            --output mcp-publisher.tar.gz
+          echo '4d527ca8f1ced0394c962dc925c2a4a4addef441cbefd62501c875e9481823a8  mcp-publisher.tar.gz' | sha256sum --check
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+
+      - name: Publish the manifest
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish server.json
