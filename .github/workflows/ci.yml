@@ -62,6 +62,15 @@ jobs:
       - name: CLI 入口自检（装包后不能 ImportError）
         run: uv run basepilot-mcp doctor
 
+      - name: Install and run the built wheel outside the checkout
+        run: |
+          uv build --wheel
+          wheel="$(realpath dist/*.whl)"
+          cd "$(mktemp -d)"
+          uvx --python 3.11 --from "$wheel" basepilot demo > preview.json
+          python -c 'import json; p=json.load(open("preview.json"))["preview"]; assert p["ok"] == 1 and p["would_write"] is False'
+          uvx --python 3.11 --from "$wheel" basepilot serve --help
+
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 20
