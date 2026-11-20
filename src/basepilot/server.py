@@ -39,6 +39,32 @@ def _cmd_serve(
     return 0
 
 
+def _cmd_demo() -> int:
+    """Run the same write preview as the MCP tool against a sample schema."""
+    from .schema import FieldType
+    from .tools.ops import preview_create
+
+    schema: dict[str, int] = {
+        "SKU": FieldType.TEXT,
+        "Marketplace": FieldType.SINGLE_SELECT,
+        "Review date": FieldType.DATETIME,
+        "Owner": FieldType.USER,
+        "Urgent": FieldType.CHECKBOX,
+    }
+    records = [
+        {
+            "SKU": "PET-DEMO-001",
+            "Marketplace": ["US"],
+            "Review date": 1674206443,
+            "Owner": "ou_demo",
+            "Urgent": "true",
+        }
+    ]
+    result = preview_create(schema, records)
+    print(json.dumps({"input": records, "preview": result}, ensure_ascii=False, indent=2))
+    return 0 if result["failed"] == 0 else 1
+
+
 def _cmd_doctor() -> int:
     """环境自检：告诉使用者当前能做什么、还差什么。"""
     from .config import BATCH_CREATE_MAX, TOKEN_REFRESH_THRESHOLD, WRITE_MIN_INTERVAL
@@ -97,6 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"basepilot {__version__}")
     sub = parser.add_subparsers(dest="command")
 
+    sub.add_parser("demo", help="Preview a sample Feishu Base write without credentials")
     sub.add_parser("doctor", help="环境自检：当前能力与待实现项")
     sub.add_parser("troubleshooting", help="打印错误码处置速查")
     sub.add_parser(
@@ -132,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+    if args.command == "demo":
+        return _cmd_demo()
     if args.command == "doctor":
         return _cmd_doctor()
     if args.command == "init":

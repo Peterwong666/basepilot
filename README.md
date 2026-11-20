@@ -16,6 +16,16 @@
 
 ---
 
+## 先试一次飞书写入预演
+
+```bash
+uvx --from git+https://github.com/Peterwong666/basepilot.git basepilot demo
+```
+
+示例会把单选数组、秒级时间戳、人员 ID 和字符串布尔值转换为飞书字段格式。输出含原始输入和编码结果，`would_write: false`。只需安装 uv，无需飞书凭证。
+
+连接自己的多维表格时，先运行 `uvx basepilot init` 生成 MCP 配置。在 Claude Code 或 Cursor 中选择一个专用测试表，准备文本类型的 `SKU` 和数字类型的 `库存` 字段。依次执行 `describe_table` 读取字段、用 `dry_run_create` 预演 `{"SKU":"PET-DEMO-001","库存":12}`，然后以 `SKU` 为键运行 `batch_upsert`。再次以相同 SKU 和新库存运行，确认记录总数不变且库存更新。权限和配置步骤见下方[快速开始](#快速开始)。
+
 ## 这是什么
 
 中小企业已经在用飞书多维表格承载业务台账（库存、广告、差评跟进），
@@ -388,6 +398,12 @@ MIT
 **BasePilot** is a **Feishu (Lark) Base MCP Server** for enterprise delivery — it turns
 multi-dimensional tables (Base) into business ledgers that Claude Code / Cursor can **safely
 read and write**.
+
+### First run
+
+Run `uvx --from git+https://github.com/Peterwong666/basepilot.git basepilot demo` to preview one sample record without Feishu credentials. The JSON includes the original input, Feishu-ready values and `would_write: false`.
+
+For a real table, use `uvx basepilot init` to generate client configuration. Use a dedicated test table with text `SKU` and numeric `Stock` fields. In Claude Code or Cursor, call `describe_table`, preview one record with `dry_run_create`, then call `batch_upsert` with `SKU` as the key. Run it again with the same SKU and an updated stock value and check that a single row has the new value.
 
 ### Why
 

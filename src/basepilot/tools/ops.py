@@ -40,9 +40,13 @@ async def dry_run_create(
     Args:
         records: 准备新增的记录列表。
     """
-    from ..config import BATCH_CREATE_MAX
-
     meta = await client.list_fields(app_token, table_id)
+    return preview_create(meta, records)
+
+
+def preview_create(meta: dict[str, int], records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Encode records and report batch sizes using only the supplied schema."""
+    from ..config import BATCH_CREATE_MAX
 
     per_record: list[dict[str, Any]] = []
     ok = 0
